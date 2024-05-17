@@ -30,7 +30,6 @@ jobs:
     - run: npm ci
     - name: test echo
       run: |
-        echo "The current Job ${{ jobs.job_id }}"
         echo "The current environment2 is ${{ matrix.environment }}"
         echo "The secrets is ${{ secrets.MY_SECRET }}"
         echo "The var is ${{ vars.MY_VAR }}"
