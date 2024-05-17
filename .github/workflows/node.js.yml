@@ -11,9 +11,8 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    environment: dev2
     strategy:
       matrix:
         environment: [dev2]
@@ -30,6 +29,7 @@ jobs:
     - run: npm ci
     - name: test echo
       run: |
+        echo "The current environment1 is ${{ jobs.build.environment }}"
         echo "The current environment2 is ${{ matrix.environment }}"
         echo "The secrets is ${{ secrets.MY_SECRET }}"
         echo "The var is ${{ vars.MY_VAR }}"
