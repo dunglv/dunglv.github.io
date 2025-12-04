@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Lương Net từ Lương Gross</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #333;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .net-salary {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+        }
+
+        .net-salary .result-label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .net-salary .result-value {
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Tính Lương Net</h1>
+        <p class="subtitle">Tính toán lương thực nhận từ lương gross</p>
+
+        <form id="salaryForm">
+            <div class="form-group">
+                <label for="grossSalary">Tổng lương gross (VNĐ)</label>
+                <input type="number" id="grossSalary" placeholder="Nhập tổng lương gross" min="0" step="1000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="insuranceSalary">Lương đóng bảo hiểm xã hội (VNĐ)</label>
+                <input type="number" id="insuranceSalary" placeholder="Nhập lương đóng BHXH" min="0" step="1000" required>
+            </div>
+
+            <div class="input-group">
+                <div class="form-group">
+                    <label for="unionFee">Công đoàn phí (%)</label>
+                    <input type="number" id="unionFee" placeholder="%" min="0" max="100" step="0.1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="dependents">Số người phụ thuộc</label>
+                    <input type="number" id="dependents" placeholder="Số người" min="0" step="1" value="0" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="form-group">
+                    <label for="bhxh">BHXH (%)</label>
+                    <input type="number" id="bhxh" placeholder="%" min="0" max="100" step="0.1" value="8" required>
+                    <span class="info-text">Mặc định: 8%</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="bhyt">BHYT (%)</label>
+                    <input type="number" id="bhyt" placeholder="%" min="0" max="100" step="0.1" value="1.5" required>
+                    <span class="info-text">Mặc định: 1.5%</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bhtn">BHTN (%)</label>
+                <input type="number" id="bhtn" placeholder="%" min="0" max="100" step="0.1" value="1" required>
+                <span class="info-text">Mặc định: 1%</span>
+            </div>
+
+            <button type="submit" class="calculate-btn">Tính Lương Net</button>
+        </form>
+
+        <div id="resultSection" class="result-section">
+            <div class="result-title">📊 Kết Quả Tính Toán</div>
+            
+            <div class="result-item">
+                <span class="result-label">Lương Gross:</span>
+                <span class="result-value" id="resultGross">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">BHXH (8%):</span>
+                <span class="result-value" id="resultBHXH">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">BHYT (1.5%):</span>
+                <span class="result-value" id="resultBHYT">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">BHTN (1%):</span>
+                <span class="result-value" id="resultBHTN">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Công đoàn phí:</span>
+                <span class="result-value" id="resultUnion">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Tổng các khoản khấu trừ:</span>
+                <span class="result-value" id="resultTotalDeduction">0 VNĐ</span>
+            </div>
+
+            <div class="result-item net-salary">
+                <span class="result-label">💰 Lương Net (Thực nhận):</span>
+                <span class="result-value" id="resultNet">0 VNĐ</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hàm định dạng số tiền VNĐ
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        // Hàm tính thuế thu nhập cá nhân (theo biểu thuế lũy tiến Việt Nam)
+        function calculatePersonalIncomeTax(taxableIncome) {
+            // Các mức thuế theo biểu thuế lũy tiến Việt Nam 2024
+            if (taxableIncome <= 5000000) {
+                return taxableIncome * 0.05;
+            } else if (taxableIncome <= 10000000) {
+                return 5000000 * 0.05 + (taxableIncome - 5000000) * 0.1;
+            } else if (taxableIncome <= 18000000) {
+                return 5000000 * 0.05 + 5000000 * 0.1 + (taxableIncome - 10000000) * 0.15;
+            } else if (taxableIncome <= 32000000) {
+                return 5000000 * 0.05 + 5000000 * 0.1 + 8000000 * 0.15 + (taxableIncome - 18000000) * 0.2;
+            } else if (taxableIncome <= 52000000) {
+                return 5000000 * 0.05 + 5000000 * 0.1 + 8000000 * 0.15 + 14000000 * 0.2 + (taxableIncome - 32000000) * 0.25;
+            } else if (taxableIncome <= 80000000) {
+                return 5000000 * 0.05 + 5000000 * 0.1 + 8000000 * 0.15 + 14000000 * 0.2 + 20000000 * 0.25 + (taxableIncome - 52000000) * 0.3;
+            } else {
+                return 5000000 * 0.05 + 5000000 * 0.1 + 8000000 * 0.15 + 14000000 * 0.2 + 20000000 * 0.25 + 28000000 * 0.3 + (taxableIncome - 80000000) * 0.35;
+            }
+        }
+
+        // Hàm tính lương net
+        function calculateNetSalary() {
+            // Lấy giá trị từ form
+            const grossSalary = parseFloat(document.getElementById('grossSalary').value) || 0;
+            const insuranceSalary = parseFloat(document.getElementById('insuranceSalary').value) || 0;
+            const unionFeePercent = parseFloat(document.getElementById('unionFee').value) || 0;
+            const dependents = parseInt(document.getElementById('dependents').value) || 0;
+            const bhxhPercent = parseFloat(document.getElementById('bhxh').value) || 8;
+            const bhytPercent = parseFloat(document.getElementById('bhyt').value) || 1.5;
+            const bhtnPercent = parseFloat(document.getElementById('bhtn').value) || 1;
+
+            // Tính các khoản bảo hiểm
+            const bhxh = insuranceSalary * (bhxhPercent / 100);
+            const bhyt = insuranceSalary * (bhytPercent / 100);
+            const bhtn = insuranceSalary * (bhtnPercent / 100);
+
+            // Tính công đoàn phí (tính theo lương đóng bảo hiểm xã hội)
+            const unionFee = insuranceSalary * (unionFeePercent / 100);
+
+            // Tính tổng các khoản khấu trừ bảo hiểm
+            const totalInsurance = bhxh + bhyt + bhtn;
+
+            // Tính thu nhập chịu thuế
+            const personalDeduction = 11000000; // Giảm trừ bản thân: 11 triệu/tháng
+            const dependentDeduction = 4400000; // Giảm trừ người phụ thuộc: 4.4 triệu/người/tháng
+            const totalDependentDeduction = dependents * dependentDeduction;
+
+            const taxableIncome = Math.max(0, grossSalary - totalInsurance - personalDeduction - totalDependentDeduction);
+
+            // Tính thuế thu nhập cá nhân
+            const personalIncomeTax = calculatePersonalIncomeTax(taxableIncome);
+
+            // Tính tổng các khoản khấu trừ
+            const totalDeduction = totalInsurance + unionFee + personalIncomeTax;
+
+            // Tính lương net
+            const netSalary = grossSalary - totalDeduction;
+
+            // Hiển thị kết quả
+            document.getElementById('resultGross').textContent = formatCurrency(grossSalary);
+            document.getElementById('resultBHXH').textContent = formatCurrency(bhxh);
+            document.getElementById('resultBHYT').textContent = formatCurrency(bhyt);
+            document.getElementById('resultBHTN').textContent = formatCurrency(bhtn);
+            document.getElementById('resultUnion').textContent = formatCurrency(unionFee);
+            document.getElementById('resultTotalDeduction').textContent = formatCurrency(totalDeduction);
+            document.getElementById('resultNet').textContent = formatCurrency(netSalary);
+
+            // Hiển thị phần kết quả
+            document.getElementById('resultSection').classList.add('show');
+        }
+
+        // Xử lý sự kiện submit form
+        document.getElementById('salaryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateNetSalary();
+        });
+
+        // Tự động tính khi thay đổi giá trị
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (document.getElementById('grossSalary').value && 
+                    document.getElementById('insuranceSalary').value) {
+                    calculateNetSalary();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

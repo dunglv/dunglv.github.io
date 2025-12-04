@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zun Tools - Bộ Công Cụ Tiện Ích</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .tool-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tool-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .tool-description {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .tool-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 60px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ Zun Tools</h1>
+            <p class="subtitle">Bộ công cụ tiện ích cho công việc hàng ngày</p>
+        </header>
+
+        <div class="tools-grid">
+            <a href="tinh-luong-net.html" class="tool-card">
+                <span class="tool-icon">💰</span>
+                <div class="tool-title">Tính Lương Net</div>
+                <div class="tool-description">
+                    Tính toán lương thực nhận (net) từ lương gross với đầy đủ các khoản khấu trừ: BHXH, BHYT, BHTN, công đoàn phí và thuế thu nhập cá nhân.
+                </div>
+                <span class="tool-badge">Tài chính</span>
+            </a>
+
+            <!-- Có thể thêm các tool khác ở đây -->
+            <!--
+            <a href="tool-khac.html" class="tool-card">
+                <span class="tool-icon">📊</span>
+                <div class="tool-title">Tool Khác</div>
+                <div class="tool-description">
+                    Mô tả tool khác...
+                </div>
+                <span class="tool-badge">Danh mục</span>
+            </a>
+            -->
+        </div>
+
+        <footer>
+            <p>© 2024 Zun Tools - Công cụ miễn phí cho mọi người</p>
+        </footer>
+    </div>
+</body>
+</html>
