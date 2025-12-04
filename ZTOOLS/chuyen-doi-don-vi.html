@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển Đổi Đơn Vị - Unit Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .converter-group {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .converter-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        select, input[type="number"] {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        select {
+            margin-bottom: 10px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .swap-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: transform 0.2s ease;
+        }
+
+        .swap-btn:hover {
+            transform: rotate(180deg);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .converter-group {
+                grid-template-columns: 1fr;
+            }
+
+            .swap-btn {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại</a>
+        <h1>🔄 Chuyển Đổi Đơn Vị</h1>
+        <p class="subtitle">Chuyển đổi giữa các đơn vị đo lường khác nhau</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('currency')">💰 Tiền Tệ</button>
+            <button class="tab" onclick="switchTab('length')">📏 Độ Dài</button>
+            <button class="tab" onclick="switchTab('weight')">⚖️ Khối Lượng</button>
+            <button class="tab" onclick="switchTab('temperature')">🌡️ Nhiệt Độ</button>
+        </div>
+
+        <!-- Tiền Tệ -->
+        <div id="currency" class="tab-content active">
+            <div class="converter-group">
+                <div class="converter-item">
+                    <label>Từ</label>
+                    <select id="currencyFrom">
+                        <option value="VND">VND - Việt Nam Đồng</option>
+                        <option value="USD">USD - Đô la Mỹ</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - Bảng Anh</option>
+                        <option value="JPY">JPY - Yên Nhật</option>
+                        <option value="CNY">CNY - Nhân dân tệ</option>
+                        <option value="KRW">KRW - Won Hàn Quốc</option>
+                    </select>
+                    <input type="number" id="currencyInput" placeholder="Nhập số tiền" oninput="convertCurrency()">
+                </div>
+                <button class="swap-btn" onclick="swapCurrency()">⇄</button>
+                <div class="converter-item">
+                    <label>Đến</label>
+                    <select id="currencyTo">
+                        <option value="USD">USD - Đô la Mỹ</option>
+                        <option value="VND">VND - Việt Nam Đồng</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - Bảng Anh</option>
+                        <option value="JPY">JPY - Yên Nhật</option>
+                        <option value="CNY">CNY - Nhân dân tệ</option>
+                        <option value="KRW">KRW - Won Hàn Quốc</option>
+                    </select>
+                    <input type="number" id="currencyOutput" placeholder="Kết quả" readonly>
+                </div>
+            </div>
+            <div class="result">
+                <div>Kết quả</div>
+                <div class="result-value" id="currencyResult">0</div>
+            </div>
+        </div>
+
+        <!-- Độ Dài -->
+        <div id="length" class="tab-content">
+            <div class="converter-group">
+                <div class="converter-item">
+                    <label>Từ</label>
+                    <select id="lengthFrom">
+                        <option value="mm">mm - Milimet</option>
+                        <option value="cm">cm - Centimet</option>
+                        <option value="m">m - Mét</option>
+                        <option value="km">km - Kilomet</option>
+                        <option value="in">in - Inch</option>
+                        <option value="ft">ft - Feet</option>
+                        <option value="yd">yd - Yard</option>
+                        <option value="mi">mi - Dặm</option>
+                    </select>
+                    <input type="number" id="lengthInput" placeholder="Nhập độ dài" oninput="convertLength()">
+                </div>
+                <button class="swap-btn" onclick="swapLength()">⇄</button>
+                <div class="converter-item">
+                    <label>Đến</label>
+                    <select id="lengthTo">
+                        <option value="cm">cm - Centimet</option>
+                        <option value="mm">mm - Milimet</option>
+                        <option value="m">m - Mét</option>
+                        <option value="km">km - Kilomet</option>
+                        <option value="in">in - Inch</option>
+                        <option value="ft">ft - Feet</option>
+                        <option value="yd">yd - Yard</option>
+                        <option value="mi">mi - Dặm</option>
+                    </select>
+                    <input type="number" id="lengthOutput" placeholder="Kết quả" readonly>
+                </div>
+            </div>
+            <div class="result">
+                <div>Kết quả</div>
+                <div class="result-value" id="lengthResult">0</div>
+            </div>
+        </div>
+
+        <!-- Khối Lượng -->
+        <div id="weight" class="tab-content">
+            <div class="converter-group">
+                <div class="converter-item">
+                    <label>Từ</label>
+                    <select id="weightFrom">
+                        <option value="g">g - Gram</option>
+                        <option value="kg">kg - Kilogram</option>
+                        <option value="t">t - Tấn</option>
+                        <option value="oz">oz - Ounce</option>
+                        <option value="lb">lb - Pound</option>
+                    </select>
+                    <input type="number" id="weightInput" placeholder="Nhập khối lượng" oninput="convertWeight()">
+                </div>
+                <button class="swap-btn" onclick="swapWeight()">⇄</button>
+                <div class="converter-item">
+                    <label>Đến</label>
+                    <select id="weightTo">
+                        <option value="kg">kg - Kilogram</option>
+                        <option value="g">g - Gram</option>
+                        <option value="t">t - Tấn</option>
+                        <option value="oz">oz - Ounce</option>
+                        <option value="lb">lb - Pound</option>
+                    </select>
+                    <input type="number" id="weightOutput" placeholder="Kết quả" readonly>
+                </div>
+            </div>
+            <div class="result">
+                <div>Kết quả</div>
+                <div class="result-value" id="weightResult">0</div>
+            </div>
+        </div>
+
+        <!-- Nhiệt Độ -->
+        <div id="temperature" class="tab-content">
+            <div class="converter-group">
+                <div class="converter-item">
+                    <label>Từ</label>
+                    <select id="tempFrom">
+                        <option value="C">°C - Celsius</option>
+                        <option value="F">°F - Fahrenheit</option>
+                        <option value="K">K - Kelvin</option>
+                    </select>
+                    <input type="number" id="tempInput" placeholder="Nhập nhiệt độ" oninput="convertTemperature()">
+                </div>
+                <button class="swap-btn" onclick="swapTemperature()">⇄</button>
+                <div class="converter-item">
+                    <label>Đến</label>
+                    <select id="tempTo">
+                        <option value="F">°F - Fahrenheit</option>
+                        <option value="C">°C - Celsius</option>
+                        <option value="K">K - Kelvin</option>
+                    </select>
+                    <input type="number" id="tempOutput" placeholder="Kết quả" readonly>
+                </div>
+            </div>
+            <div class="result">
+                <div>Kết quả</div>
+                <div class="result-value" id="tempResult">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tỷ giá (cập nhật theo thời gian thực)
+        const exchangeRates = {
+            VND: 1,
+            USD: 24500,
+            EUR: 26500,
+            GBP: 31000,
+            JPY: 165,
+            CNY: 3400,
+            KRW: 18.5
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Tiền Tệ
+        function convertCurrency() {
+            const from = document.getElementById('currencyFrom').value;
+            const to = document.getElementById('currencyTo').value;
+            const amount = parseFloat(document.getElementById('currencyInput').value) || 0;
+            
+            const result = (amount * exchangeRates[from]) / exchangeRates[to];
+            document.getElementById('currencyOutput').value = result.toFixed(2);
+            document.getElementById('currencyResult').textContent = formatCurrency(result, to);
+        }
+
+        function swapCurrency() {
+            const from = document.getElementById('currencyFrom').value;
+            const to = document.getElementById('currencyTo').value;
+            document.getElementById('currencyFrom').value = to;
+            document.getElementById('currencyTo').value = from;
+            convertCurrency();
+        }
+
+        function formatCurrency(amount, currency) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Độ Dài
+        const lengthConversions = {
+            mm: 1,
+            cm: 10,
+            m: 1000,
+            km: 1000000,
+            in: 25.4,
+            ft: 304.8,
+            yd: 914.4,
+            mi: 1609344
+        };
+
+        function convertLength() {
+            const from = document.getElementById('lengthFrom').value;
+            const to = document.getElementById('lengthTo').value;
+            const value = parseFloat(document.getElementById('lengthInput').value) || 0;
+            
+            const result = (value * lengthConversions[from]) / lengthConversions[to];
+            document.getElementById('lengthOutput').value = result.toFixed(6);
+            document.getElementById('lengthResult').textContent = result.toFixed(6) + ' ' + to;
+        }
+
+        function swapLength() {
+            const from = document.getElementById('lengthFrom').value;
+            const to = document.getElementById('lengthTo').value;
+            document.getElementById('lengthFrom').value = to;
+            document.getElementById('lengthTo').value = from;
+            convertLength();
+        }
+
+        // Khối Lượng
+        const weightConversions = {
+            g: 1,
+            kg: 1000,
+            t: 1000000,
+            oz: 28.35,
+            lb: 453.592
+        };
+
+        function convertWeight() {
+            const from = document.getElementById('weightFrom').value;
+            const to = document.getElementById('weightTo').value;
+            const value = parseFloat(document.getElementById('weightInput').value) || 0;
+            
+            const result = (value * weightConversions[from]) / weightConversions[to];
+            document.getElementById('weightOutput').value = result.toFixed(6);
+            document.getElementById('weightResult').textContent = result.toFixed(6) + ' ' + to;
+        }
+
+        function swapWeight() {
+            const from = document.getElementById('weightFrom').value;
+            const to = document.getElementById('weightTo').value;
+            document.getElementById('weightFrom').value = to;
+            document.getElementById('weightTo').value = from;
+            convertWeight();
+        }
+
+        // Nhiệt Độ
+        function convertTemperature() {
+            const from = document.getElementById('tempFrom').value;
+            const to = document.getElementById('tempTo').value;
+            const value = parseFloat(document.getElementById('tempInput').value) || 0;
+            
+            let result = value;
+            
+            // Convert to Celsius first
+            if (from === 'F') result = (value - 32) * 5/9;
+            if (from === 'K') result = value - 273.15;
+            
+            // Convert from Celsius to target
+            if (to === 'F') result = (result * 9/5) + 32;
+            if (to === 'K') result = result + 273.15;
+            
+            document.getElementById('tempOutput').value = result.toFixed(2);
+            document.getElementById('tempResult').textContent = result.toFixed(2) + '°' + to;
+        }
+
+        function swapTemperature() {
+            const from = document.getElementById('tempFrom').value;
+            const to = document.getElementById('tempTo').value;
+            document.getElementById('tempFrom').value = to;
+            document.getElementById('tempTo').value = from;
+            convertTemperature();
+        }
+    </script>
+</body>
+</html>

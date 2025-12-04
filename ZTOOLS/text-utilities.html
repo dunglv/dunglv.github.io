@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Utilities - Công Cụ Xử Lý Văn Bản</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tool-btn {
+            padding: 12px 20px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        .tool-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại</a>
+        <h1>📝 Text Utilities</h1>
+        <p class="subtitle">Công cụ xử lý và phân tích văn bản</p>
+
+        <div class="input-section">
+            <label for="textInput">Nhập văn bản của bạn:</label>
+            <textarea id="textInput" placeholder="Nhập hoặc dán văn bản vào đây..." oninput="updateStats()"></textarea>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Số ký tự</div>
+                <div class="stat-value" id="charCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số từ</div>
+                <div class="stat-value" id="wordCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số dòng</div>
+                <div class="stat-value" id="lineCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số đoạn</div>
+                <div class="stat-value" id="paragraphCount">0</div>
+            </div>
+        </div>
+
+        <div class="tools-grid">
+            <button class="tool-btn" onclick="toUpperCase()">CHỮ HOA</button>
+            <button class="tool-btn" onclick="toLowerCase()">chữ thường</button>
+            <button class="tool-btn" onclick="toTitleCase()">Chữ Hoa Đầu Từ</button>
+            <button class="tool-btn" onclick="toSentenceCase()">Chữ hoa đầu câu</button>
+            <button class="tool-btn" onclick="removeSpaces()">Xóa Khoảng Trắng</button>
+            <button class="tool-btn" onclick="removeLineBreaks()">Xóa Xuống Dòng</button>
+            <button class="tool-btn" onclick="removeDuplicates()">Xóa Dòng Trùng</button>
+            <button class="tool-btn" onclick="reverseText()">Đảo Ngược</button>
+            <button class="tool-btn" onclick="removeNumbers()">Xóa Số</button>
+            <button class="tool-btn" onclick="removeSpecialChars()">Xóa Ký Tự Đặc Biệt</button>
+            <button class="tool-btn" onclick="trimLines()">Xóa Khoảng Trắng Đầu/Cuối</button>
+            <button class="tool-btn" onclick="sortLines()">Sắp Xếp Dòng</button>
+        </div>
+
+        <div class="output-section">
+            <label for="textOutput">Kết quả:</label>
+            <textarea id="textOutput" readonly></textarea>
+            <button class="copy-btn" onclick="copyOutput()">Sao Chép Kết Quả</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Đã sao chép!</div>
+
+    <script>
+        function updateStats() {
+            const text = document.getElementById('textInput').value;
+            document.getElementById('charCount').textContent = text.length;
+            document.getElementById('wordCount').textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+            document.getElementById('lineCount').textContent = text ? text.split('\n').length : 0;
+            document.getElementById('paragraphCount').textContent = text.trim() ? text.trim().split(/\n\s*\n/).length : 0;
+        }
+
+        function getText() {
+            return document.getElementById('textInput').value;
+        }
+
+        function setOutput(text) {
+            document.getElementById('textOutput').value = text;
+        }
+
+        function toUpperCase() {
+            setOutput(getText().toUpperCase());
+        }
+
+        function toLowerCase() {
+            setOutput(getText().toLowerCase());
+        }
+
+        function toTitleCase() {
+            const text = getText().toLowerCase();
+            setOutput(text.replace(/\b\w/g, char => char.toUpperCase()));
+        }
+
+        function toSentenceCase() {
+            const text = getText().toLowerCase();
+            setOutput(text.replace(/(^\w{1}|\.\s*\w{1})/gi, char => char.toUpperCase()));
+        }
+
+        function removeSpaces() {
+            setOutput(getText().replace(/\s+/g, ''));
+        }
+
+        function removeLineBreaks() {
+            setOutput(getText().replace(/\n/g, ' '));
+        }
+
+        function removeDuplicates() {
+            const lines = getText().split('\n');
+            const unique = [...new Set(lines)];
+            setOutput(unique.join('\n'));
+        }
+
+        function reverseText() {
+            setOutput(getText().split('').reverse().join(''));
+        }
+
+        function removeNumbers() {
+            setOutput(getText().replace(/\d/g, ''));
+        }
+
+        function removeSpecialChars() {
+            setOutput(getText().replace(/[^a-zA-Z0-9\s\n]/g, ''));
+        }
+
+        function trimLines() {
+            const lines = getText().split('\n');
+            setOutput(lines.map(line => line.trim()).join('\n'));
+        }
+
+        function sortLines() {
+            const lines = getText().split('\n');
+            setOutput(lines.sort().join('\n'));
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('textOutput').value;
+            if (!output) {
+                alert('Không có nội dung để sao chép!');
+                return;
+            }
+
+            navigator.clipboard.writeText(output).then(() => {
+                showToast('Đã sao chép!');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = output;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Đã sao chép!');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

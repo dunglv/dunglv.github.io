@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Lãi Suất Vay - Loan Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #333;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .highlight {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+        }
+
+        .highlight .result-label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .highlight .result-value {
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại</a>
+        <h1>💳 Tính Lãi Suất Vay</h1>
+        <p class="subtitle">Tính toán số tiền phải trả hàng tháng và tổng lãi suất</p>
+
+        <form id="loanForm">
+            <div class="form-group">
+                <label for="loanAmount">Số tiền vay (VNĐ)</label>
+                <input type="number" id="loanAmount" placeholder="Nhập số tiền vay" min="0" step="100000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="interestRate">Lãi suất năm (%)</label>
+                <input type="number" id="interestRate" placeholder="Nhập lãi suất" min="0" max="100" step="0.1" required>
+                <span class="info-text">Ví dụ: 12% = 12</span>
+            </div>
+
+            <div class="form-group">
+                <label for="loanTerm">Thời hạn vay (tháng)</label>
+                <input type="number" id="loanTerm" placeholder="Nhập số tháng" min="1" step="1" required>
+                <span class="info-text">Ví dụ: 12 tháng = 12</span>
+            </div>
+
+            <button type="submit" class="calculate-btn">Tính Toán</button>
+        </form>
+
+        <div id="resultSection" class="result-section">
+            <div class="result-title">📊 Kết Quả Tính Toán</div>
+            
+            <div class="result-item">
+                <span class="result-label">Số tiền vay:</span>
+                <span class="result-value" id="resultLoanAmount">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Lãi suất/tháng:</span>
+                <span class="result-value" id="resultMonthlyRate">0%</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Số tiền trả hàng tháng:</span>
+                <span class="result-value" id="resultMonthlyPayment">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Tổng số tiền phải trả:</span>
+                <span class="result-value" id="resultTotalPayment">0 VNĐ</span>
+            </div>
+
+            <div class="result-item highlight">
+                <span class="result-label">💰 Tổng lãi suất phải trả:</span>
+                <span class="result-value" id="resultTotalInterest">0 VNĐ</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function calculateLoan() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
+            const annualRate = parseFloat(document.getElementById('interestRate').value) || 0;
+            const loanTerm = parseInt(document.getElementById('loanTerm').value) || 0;
+
+            if (loanAmount <= 0 || annualRate <= 0 || loanTerm <= 0) {
+                alert('Vui lòng nhập đầy đủ thông tin hợp lệ!');
+                return;
+            }
+
+            // Tính lãi suất tháng
+            const monthlyRate = annualRate / 100 / 12;
+
+            // Tính số tiền trả hàng tháng (công thức lãi kép)
+            const monthlyPayment = loanAmount * 
+                (monthlyRate * Math.pow(1 + monthlyRate, loanTerm)) / 
+                (Math.pow(1 + monthlyRate, loanTerm) - 1);
+
+            // Tổng số tiền phải trả
+            const totalPayment = monthlyPayment * loanTerm;
+
+            // Tổng lãi suất
+            const totalInterest = totalPayment - loanAmount;
+
+            // Hiển thị kết quả
+            document.getElementById('resultLoanAmount').textContent = formatCurrency(loanAmount);
+            document.getElementById('resultMonthlyRate').textContent = (monthlyRate * 100).toFixed(3) + '%';
+            document.getElementById('resultMonthlyPayment').textContent = formatCurrency(monthlyPayment);
+            document.getElementById('resultTotalPayment').textContent = formatCurrency(totalPayment);
+            document.getElementById('resultTotalInterest').textContent = formatCurrency(totalInterest);
+
+            // Hiển thị phần kết quả
+            document.getElementById('resultSection').classList.add('show');
+        }
+
+        document.getElementById('loanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateLoan();
+        });
+
+        // Tự động tính khi thay đổi giá trị
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (document.getElementById('loanAmount').value && 
+                    document.getElementById('interestRate').value &&
+                    document.getElementById('loanTerm').value) {
+                    calculateLoan();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

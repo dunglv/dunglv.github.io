@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoding Analyzer - Phân Tích Mã Hóa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .encoding-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+        }
+
+        .encoding-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .encoding-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .encoding-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .encoding-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .encoding-value {
+            color: #333;
+            font-weight: 700;
+            font-size: 1.2em;
+        }
+
+        .encoding-detected {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .encoding-detected .encoding-label,
+        .encoding-detected .encoding-value {
+            color: #155724;
+        }
+
+        .byte-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .byte-details-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .byte-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .byte-item {
+            padding: 5px 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .info-box-content {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại</a>
+        <h1>🔍 Encoding Analyzer</h1>
+        <p class="subtitle">Phân tích mã hóa và đếm bit của chuỗi văn bản</p>
+
+        <div class="input-section">
+            <label for="textInput">Nhập văn bản cần phân tích:</label>
+            <textarea id="textInput" placeholder="Nhập hoặc dán văn bản vào đây (hỗ trợ tiếng Nhật, tiếng Việt, emoji...)" oninput="analyzeText()"></textarea>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Số ký tự</div>
+                <div class="stat-value" id="charCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số byte (UTF-8)</div>
+                <div class="stat-value" id="utf8Bytes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số bit (UTF-8)</div>
+                <div class="stat-value" id="utf8Bits">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số byte (UTF-16)</div>
+                <div class="stat-value" id="utf16Bytes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Số bit (UTF-16)</div>
+                <div class="stat-value" id="utf16Bits">0</div>
+            </div>
+        </div>
+
+        <div class="encoding-section">
+            <div class="encoding-title">📊 Phân Tích Mã Hóa</div>
+            
+            <div class="encoding-item" id="utf8Item">
+                <span class="encoding-label">UTF-8</span>
+                <span class="encoding-value" id="utf8Info">-</span>
+            </div>
+
+            <div class="encoding-item" id="utf16Item">
+                <span class="encoding-label">UTF-16</span>
+                <span class="encoding-value" id="utf16Info">-</span>
+            </div>
+
+            <div class="encoding-item">
+                <span class="encoding-label">Mã hóa được phát hiện</span>
+                <span class="encoding-value" id="detectedEncoding">-</span>
+            </div>
+        </div>
+
+        <div class="byte-details">
+            <div class="byte-details-title">Chi tiết byte (UTF-8):</div>
+            <div class="byte-list" id="byteList"></div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-box-title">ℹ️ Thông tin:</div>
+            <div class="info-box-content">
+                <strong>UTF-8:</strong> Mã hóa biến độ dài, mỗi ký tự có thể dùng 1-4 byte. Ký tự ASCII dùng 1 byte, ký tự tiếng Việt/tiếng Nhật thường dùng 2-3 byte.<br>
+                <strong>UTF-16:</strong> Mỗi ký tự thường dùng 2 byte (1 code unit), một số ký tự đặc biệt (như emoji) có thể dùng 4 byte (2 code units).
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function analyzeText() {
+            const text = document.getElementById('textInput').value;
+            
+            // Đếm ký tự
+            const charCount = [...text].length;
+            document.getElementById('charCount').textContent = charCount;
+
+            // Tính UTF-8
+            const utf8Bytes = new TextEncoder().encode(text).length;
+            const utf8Bits = utf8Bytes * 8;
+            document.getElementById('utf8Bytes').textContent = utf8Bytes;
+            document.getElementById('utf8Bits').textContent = utf8Bits.toLocaleString();
+
+            // Tính UTF-16
+            let utf16Bytes = 0;
+            let utf16CodeUnits = 0;
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i);
+                if (code >= 0xD800 && code <= 0xDFFF) {
+                    // Surrogate pair (4 bytes)
+                    utf16Bytes += 4;
+                    utf16CodeUnits += 2;
+                    i++; // Skip next char as it's part of the pair
+                } else {
+                    // Regular character (2 bytes)
+                    utf16Bytes += 2;
+                    utf16CodeUnits += 1;
+                }
+            }
+            const utf16Bits = utf16Bytes * 8;
+            document.getElementById('utf16Bytes').textContent = utf16Bytes;
+            document.getElementById('utf16Bits').textContent = utf16Bits.toLocaleString();
+
+            // Phân tích encoding
+            analyzeEncoding(text, utf8Bytes, utf16Bytes);
+
+            // Hiển thị chi tiết byte
+            showByteDetails(text);
+        }
+
+        function analyzeEncoding(text, utf8Bytes, utf16Bytes) {
+            // Xác định encoding dựa trên kích thước
+            let detectedEncoding = '';
+            let isUTF8 = false;
+            let isUTF16 = false;
+
+            if (text.length === 0) {
+                detectedEncoding = 'Không có dữ liệu';
+            } else {
+                // Kiểm tra xem có phải ASCII không (chỉ dùng 1 byte trong UTF-8)
+                const isASCII = /^[\x00-\x7F]*$/.test(text);
+                
+                if (isASCII) {
+                    detectedEncoding = 'ASCII (tương thích UTF-8)';
+                    isUTF8 = true;
+                } else {
+                    // So sánh kích thước
+                    if (utf8Bytes <= utf16Bytes) {
+                        detectedEncoding = 'Có thể là UTF-8';
+                        isUTF8 = true;
+                    } else {
+                        detectedEncoding = 'Có thể là UTF-16';
+                        isUTF16 = true;
+                    }
+
+                    // Kiểm tra thêm: nếu có nhiều ký tự đặc biệt/emoji, có thể là UTF-16
+                    const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(text);
+                    const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+                    
+                    if (hasEmoji && utf16Bytes > utf8Bytes * 0.8) {
+                        detectedEncoding = 'Có thể là UTF-16 (có emoji)';
+                        isUTF16 = true;
+                    }
+                }
+            }
+
+            // Cập nhật UI
+            document.getElementById('detectedEncoding').textContent = detectedEncoding;
+            
+            const utf8Item = document.getElementById('utf8Item');
+            const utf16Item = document.getElementById('utf16Item');
+            
+            utf8Item.classList.remove('encoding-detected');
+            utf16Item.classList.remove('encoding-detected');
+
+            if (isUTF8) {
+                utf8Item.classList.add('encoding-detected');
+                document.getElementById('utf8Info').textContent = `${utf8Bytes} bytes (${(utf8Bytes / text.length).toFixed(2)} bytes/ký tự)`;
+            } else {
+                document.getElementById('utf8Info').textContent = `${utf8Bytes} bytes (${(utf8Bytes / text.length).toFixed(2)} bytes/ký tự)`;
+            }
+
+            if (isUTF16) {
+                utf16Item.classList.add('encoding-detected');
+                document.getElementById('utf16Info').textContent = `${utf16Bytes} bytes (${(utf16Bytes / text.length).toFixed(2)} bytes/ký tự)`;
+            } else {
+                document.getElementById('utf16Info').textContent = `${utf16Bytes} bytes (${(utf16Bytes / text.length).toFixed(2)} bytes/ký tự)`;
+            }
+        }
+
+        function showByteDetails(text) {
+            const byteList = document.getElementById('byteList');
+            byteList.innerHTML = '';
+
+            if (text.length === 0) {
+                byteList.textContent = 'Không có dữ liệu';
+                return;
+            }
+
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(text);
+
+            bytes.forEach((byte, index) => {
+                const byteItem = document.createElement('span');
+                byteItem.className = 'byte-item';
+                byteItem.textContent = `0x${byte.toString(16).toUpperCase().padStart(2, '0')} (${byte})`;
+                byteItem.title = `Byte ${index + 1} của ${bytes.length}`;
+                byteList.appendChild(byteItem);
+            });
+
+            if (bytes.length === 0) {
+                byteList.textContent = 'Không có dữ liệu';
+            }
+        }
+
+        // Tự động phân tích khi nhập
+        document.getElementById('textInput').addEventListener('input', analyzeText);
+        
+        // Phân tích khi trang load
+        analyzeText();
+    </script>
+</body>
+</html>
