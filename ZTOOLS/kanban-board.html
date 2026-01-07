@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Kanban Board</title>
+    <!-- SortableJS for Drag and Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --column-bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+            overflow-x: auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Kanban Board */
+        .kanban-board {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            height: calc(100vh - 100px);
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .column {
+            background: var(--column-bg);
+            min-width: 300px;
+            width: 300px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .column-header {
+            padding: 15px;
+            font-weight: 700;
+            color: #4b5563;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .task-count {
+            background: #e5e7eb;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .column-content {
+            padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 50px;
+            /* Drop zone */
+        }
+
+        /* Cards */
+        .task-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .task-card:active {
+            cursor: grabbing;
+        }
+
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #1f2937;
+        }
+
+        .task-desc {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Priority Colors */
+        .priority-high {
+            border-left-color: #ef4444;
+        }
+
+        .priority-medium {
+            border-left-color: #f59e0b;
+        }
+
+        .priority-low {
+            border-left-color: #10b981;
+        }
+
+        .tag-high {
+            background: #ef4444;
+        }
+
+        .tag-medium {
+            background: #f59e0b;
+        }
+
+        .tag-low {
+            background: #10b981;
+        }
+
+        .add-task-btn {
+            margin: 10px;
+            padding: 8px;
+            background: transparent;
+            border: 2px dashed #d1d5db;
+            color: #6b7280;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-task-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Sync Status */
+        .sync-status {
+            color: white;
+            font-size: 0.9rem;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sync-loading {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        /* Context Menu for Delete */
+        .context-menu {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            color: #ef4444;
+        }
+
+        .context-menu-item:hover {
+            background: #f9fafb;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <a href="index.html" class="back-link">← ZTools</a>
+            <h1>📋 Kanban Board</h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div id="syncStatus" class="sync-status">Local Mode</div>
+            <div class="header-controls">
+                <button class="btn btn-primary" onclick="openSettings()">⚙️ Sync Settings</button>
+                <button class="btn btn-success" onclick="syncData()">🔄 Sync Now</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="kanban-board" id="board">
+        <!-- Columns will be generated by JS -->
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">Thêm Task Mới</div>
+            <div class="form-group">
+                <label>Tiêu đề</label>
+                <input type="text" id="taskTitle">
+            </div>
+            <div class="form-group">
+                <label>Mô tả</label>
+                <textarea id="taskDesc" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Hạn chót (Due Date)</label>
+                <input type="datetime-local" id="taskDueDate">
+            </div>
+            <div class="form-group">
+                <label>Mức độ ưu tiên</label>
+                <select id="taskPriority">
+                    <option value="high">Cao (High)</option>
+                    <option value="medium" selected>Trung bình (Medium)</option>
+                    <option value="low">Thấp (Low)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('taskModal')">Hủy</button>
+                <button class="btn btn-success" onclick="saveTask()">Lưu Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">Cấu hình Sync (GitHub Gist)</div>
+            <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                Để đồng bộ đa thiết bị, hãy nhập GitHub Personal Access Token. Tool sẽ tự động tạo/tìm Gist để lưu dữ
+                liệu.
+            </p>
+            <div class="form-group">
+                <label>GitHub Personal Access Token (Scope: gist)</label>
+                <input type="password" id="githubToken" placeholder="ghp_...">
+            </div>
+            <div class="form-group">
+                <label>Gist ID (Optional - Để trống sẽ tự tạo mới)</label>
+                <input type="text" id="gistId" placeholder="Nhập ID nếu đã có">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('settingsModal')">Đóng</button>
+                <button class="btn btn-success" onclick="saveSettings()">Lưu & Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conflict Modal -->
+    <div class="modal" id="conflictModal">
+        <div class="modal-content">
+            <div class="modal-header">⚠️ Đồng bộ dữ liệu</div>
+            <p id="conflictMsg" style="margin-bottom: 20px; color: #555;">Dữ liệu trên Cloud và thiết bị này không đồng
+                nhất.</p>
+            <div class="modal-actions" style="justify-content: center; gap: 15px;">
+                <button class="btn" onclick="resolveConflict('pull')" style="background: #f3f4f6; color: #333;">⬇️ Lấy
+                    từ Cloud</button>
+                <button class="btn btn-primary" onclick="resolveConflict('push')">⬆️ Đẩy lên Cloud</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data ---
+        let data = {
+            todo: [],
+            inprogress: [],
+            done: [],
+            lastUpdated: Date.now()
+        };
+
+        const DEFAULT_DATA = {
+            todo: [
+                { id: 't1', title: 'Welcome to Kanban', desc: 'Drag me to In Progress!', priority: 'low' }
+            ],
+            inprogress: [],
+            done: [],
+            lastUpdated: Date.now()
+        };
+
+        // --- Config ---
+        let config = {
+            githubToken: '',
+            gistId: ''
+        };
+
+        // --- DOM Elements ---
+        const board = document.getElementById('board');
+        const syncStatus = document.getElementById('syncStatus');
+
+        // --- Init ---
+        function init() {
+            // Load config
+            const savedConfig = localStorage.getItem('kanban_config');
+            if (savedConfig) config = JSON.parse(savedConfig);
+
+            // Load data
+            const savedData = localStorage.getItem('kanban_data');
+            if (savedData) {
+                data = JSON.parse(savedData);
+                // Backwards compatibility for data without timestamp
+                if (!data.lastUpdated) data.lastUpdated = Date.now();
+
+                renderBoard();
+
+                if (config.githubToken && config.gistId) {
+                    // Auto check on load
+                    checkSync();
+                }
+            } else {
+                data = DEFAULT_DATA;
+                renderBoard();
+            }
+
+            requestNotificationPermission();
+            // Check reminders every 15 seconds
+            setInterval(checkReminders, 15000);
+            checkReminders();
+        }
+
+        // --- Rendering ---
+        const COLUMNS = [
+            { id: 'todo', title: 'To Do' },
+            { id: 'inprogress', title: 'In Progress' },
+            { id: 'done', title: 'Done' }
+        ];
+
+        function renderBoard() {
+            board.innerHTML = '';
+            COLUMNS.forEach(col => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'column';
+                colDiv.innerHTML = `
+                    <div class="column-header">
+                        ${col.title}
+                        <span class="task-count">${data[col.id].length}</span>
+                    </div>
+                `;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'column-content';
+                contentDiv.id = `col-${col.id}`;
+                contentDiv.setAttribute('data-col', col.id);
+
+                data[col.id].forEach(task => {
+                    contentDiv.appendChild(createTaskElement(task, col.id));
+                });
+
+                colDiv.appendChild(contentDiv);
+
+                // Add Task Button
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-task-btn';
+                addBtn.textContent = '+ Thêm thẻ mới';
+                addBtn.onclick = () => openTaskModal(col.id);
+                colDiv.appendChild(addBtn);
+
+                board.appendChild(colDiv);
+
+                // Init Sortable
+                new Sortable(contentDiv, {
+                    group: 'kanban',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function (evt) {
+                        handleDragDrop(evt);
+                    }
+                });
+            });
+        }
+
+        function createTaskElement(task, columnId) {
+            const el = document.createElement('div');
+            el.className = `task-card priority-${task.priority}`;
+            el.setAttribute('data-id', task.id);
+
+            let dateHtml = '';
+            if (task.dueDate) {
+                const date = new Date(task.dueDate);
+                const isOverdue = new Date() > date && columnId !== 'done';
+                const dateStr = date.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+                dateHtml = `<div class="task-date" style="font-size:0.85em; color: ${isOverdue ? '#ef4444' : '#6b7280'}; margin-top:5px;">📅 ${dateStr}</div>`;
+            }
+
+            el.innerHTML = `
+                <div class="task-title">${task.title}</div>
+                ${task.desc ? `<div class="task-desc">${task.desc}</div>` : ''}
+                <div class="task-tags">
+                    <span class="tag tag-${task.priority}">${task.priority.toUpperCase()}</span>
+                </div>
+                ${dateHtml}
+            `;
+            // Click to edit
+            el.onclick = (e) => {
+                // Prevent bubbling if clicking tags or buttons if added later, but here is fine
+                openTaskModal(columnId, task);
+            };
+            // Right click to delete
+            el.oncontextmenu = (e) => showContextMenu(e, task.id);
+            return el;
+        }
+
+        // --- Actions ---
+        let currentColumn = null;
+        let editingTask = null;
+
+        function openTaskModal(colId, task = null) {
+            currentColumn = colId;
+            editingTask = task;
+
+            const modalTitle = document.querySelector('#taskModal .modal-header');
+
+            if (task) {
+                // Edit Mode
+                modalTitle.textContent = 'Cập nhật Task';
+                document.getElementById('taskTitle').value = task.title;
+                document.getElementById('taskDesc').value = task.desc || '';
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskDueDate').value = task.dueDate || '';
+            } else {
+                // Create Mode
+                modalTitle.textContent = 'Thêm Task Mới';
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDesc').value = '';
+                document.getElementById('taskPriority').value = 'medium';
+                document.getElementById('taskDueDate').value = '';
+            }
+
+            document.getElementById('taskModal').classList.add('show');
+            document.getElementById('taskTitle').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            editingTask = null;
+        }
+
+        function saveTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const desc = document.getElementById('taskDesc').value.trim();
+            const priority = document.getElementById('taskPriority').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+
+            if (!title) return alert('Vui lòng nhập tiêu đề!');
+
+            if (editingTask) {
+                // Update existing
+                editingTask.title = title;
+                editingTask.desc = desc;
+                editingTask.priority = priority;
+                editingTask.dueDate = dueDate;
+            } else {
+                // Create new
+                const checkCol = currentColumn || 'todo';
+                if (!data[checkCol]) data[checkCol] = [];
+
+                const newTask = {
+                    id: 't' + Date.now(),
+                    title,
+                    desc,
+                    priority,
+                    dueDate
+                };
+                data[checkCol].push(newTask);
+            }
+
+            saveLocal();
+            renderBoard();
+            closeModal('taskModal');
+        }
+
+        function handleDragDrop(evt) {
+            const fromCol = evt.from.getAttribute('data-col');
+            const toCol = evt.to.getAttribute('data-col');
+            const oldIndex = evt.oldIndex;
+            const newIndex = evt.newIndex;
+
+            const task = data[fromCol][oldIndex];
+            data[fromCol].splice(oldIndex, 1);
+            data[toCol].splice(newIndex, 0, task);
+
+            saveLocal();
+            renderBoard();
+        }
+
+        // --- Context Menu (Delete) ---
+        // Simple implementation: standard confirm
+        function showContextMenu(e, taskId) {
+            e.preventDefault();
+            if (confirm('Bạn có chắc muốn xóa task này?')) {
+                // Find and delete
+                Object.keys(data).forEach(col => {
+                    if (Array.isArray(data[col])) {
+                        const idx = data[col].findIndex(t => t.id === taskId);
+                        if (idx !== -1) {
+                            data[col].splice(idx, 1);
+                        }
+                    }
+                });
+                saveLocal();
+                renderBoard();
+            }
+        }
+
+        // --- Notifications ---
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) return;
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+
+        function checkReminders() {
+            if (Notification.permission !== "granted") return;
+
+            const now = new Date();
+            const colsToCheck = ['todo', 'inprogress'];
+            let hasChanges = false;
+
+            colsToCheck.forEach(col => {
+                data[col].forEach(task => {
+                    if (task.dueDate && !task.notified) {
+                        const due = new Date(task.dueDate);
+                        // Check if due date is in the past or within the next minute (to catch just-due items)
+                        if (now >= due && now.getTime() - due.getTime() < 60 * 1000 * 5) { // Notify if due or up to 5 mins past due
+                            // Trigger Notification
+                            new Notification(`⏰ Hết hạn: ${task.title}`, {
+                                body: `Task "${task.title}" đã đến hạn!`,
+                                icon: 'https://cdn-icons-png.flaticon.com/512/3239/3239952.png' // Generic generic icon
+                            });
+
+                            // Mark as notified so we don't spam
+                            task.notified = true;
+                            hasChanges = true;
+                        }
+                    }
+                });
+            });
+
+            if (hasChanges) saveLocal();
+        }
+
+        // --- Persistence ---
+        function saveLocal() {
+            data.lastUpdated = Date.now();
+            localStorage.setItem('kanban_data', JSON.stringify(data));
+        }
+
+        function openSettings() {
+            document.getElementById('githubToken').value = config.githubToken;
+            document.getElementById('gistId').value = config.gistId;
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function saveSettings() {
+            const token = document.getElementById('githubToken').value.trim();
+            const id = document.getElementById('gistId').value.trim();
+
+            config.githubToken = token;
+            config.gistId = id;
+
+            localStorage.setItem('kanban_config', JSON.stringify(config));
+            closeModal('settingsModal');
+
+            if (token) {
+                syncData();
+            }
+        }
+
+        // --- Cloud Sync (GitHub Gist) ---
+        const GIST_FILENAME = 'ztools_kanban_data.json';
+        let cloudDataBuffer = null; // Store temp cloud data for conflict resolution
+
+        // Triggered by Button
+        async function syncData() {
+            if (!config.githubToken) {
+                alert('Vui lòng nhập GitHub Token trong cài đặt!');
+                openSettings();
+                return;
+            }
+
+            syncStatus.innerHTML = '<span class="sync-loading">🔄</span> Checking...';
+
+            try {
+                if (!config.gistId) {
+                    await createGist(); // Initial push
+                } else {
+                    // Fetch and Compare
+                    const cloud = await fetchGistContent();
+                    if (!cloud) {
+                        // Empty Gist or New Gist -> Just Push
+                        await updateGist();
+                    } else {
+                        // Logic comparison
+                        compareAndResolve(cloud);
+                    }
+                }
+                setTimeout(() => {
+                    syncStatus.textContent = '🟢 Online';
+                }, 2000);
+            } catch (error) {
+                console.error(error);
+                syncStatus.textContent = '❌ Error';
+                alert('Sync Error: ' + error.message);
+            }
+        }
+
+        // Triggered by Auto-load
+        async function checkSync() {
+            try {
+                const cloud = await fetchGistContent();
+                if (cloud && cloud.lastUpdated > data.lastUpdated) {
+                    syncStatus.textContent = '⚠️ Cloud has updates';
+                    // Optional: notify user?
+                } else {
+                    syncStatus.textContent = '🟢 Online';
+                }
+            } catch (e) { /* ignore silent check errors */ }
+        }
+
+        async function fetchGistContent() {
+            const response = await fetch(`https://api.github.com/gists/${config.gistId}`, {
+                headers: { 'Authorization': `token ${config.githubToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch Gist');
+            const resData = await response.json();
+            const file = resData.files[GIST_FILENAME];
+            return file ? JSON.parse(file.content) : null;
+        }
+
+        function compareAndResolve(cloud) {
+            // Remove lastUpdated from content comparison
+            const localClean = JSON.parse(JSON.stringify(data));
+            const cloudClean = JSON.parse(JSON.stringify(cloud));
+            const localTime = localClean.lastUpdated || 0;
+            const cloudTime = cloudClean.lastUpdated || 0;
+
+            delete localClean.lastUpdated;
+            delete cloudClean.lastUpdated;
+
+            if (JSON.stringify(localClean) === JSON.stringify(cloudClean)) {
+                syncStatus.textContent = '✅ Up to date';
+                return;
+            }
+
+            // If content differs, check timestamps
+            cloudDataBuffer = cloud; // Save for modal action
+
+            const msgEl = document.getElementById('conflictMsg');
+            if (cloudTime > localTime) {
+                msgEl.innerHTML = `Cloud mới hơn Local (${new Date(cloudTime).toLocaleTimeString()}).<br>Bạn có muốn <b>Lấy về</b> không?`;
+            } else {
+                msgEl.innerHTML = `Local mới hơn Cloud.<br>Bạn có muốn <b>Đẩy lên</b> không?`;
+            }
+            document.getElementById('conflictModal').classList.add('show');
+        }
+
+        async function resolveConflict(action) {
+            closeModal('conflictModal');
+            syncStatus.innerHTML = '<span class="sync-loading">🔄</span> Syncing...';
+
+            try {
+                if (action === 'pull') {
+                    if (cloudDataBuffer) {
+                        data = cloudDataBuffer;
+                        saveLocal(); // Updates local timestamp too
+                        renderBoard();
+                        syncStatus.textContent = '✅ Pulled';
+                    }
+                } else {
+                    // Push
+                    await updateGist();
+                    syncStatus.textContent = '✅ Pushed';
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function createGist() {
+            data.lastUpdated = Date.now();
+            const content = JSON.stringify(data, null, 2);
+            const response = await fetch('https://api.github.com/gists', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${config.githubToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: 'ZTools Personal Kanban Data',
+                    public: false,
+                    files: { [GIST_FILENAME]: { content: content } }
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to create Gist');
+            const resData = await response.json();
+            config.gistId = resData.id;
+            localStorage.setItem('kanban_config', JSON.stringify(config));
+            alert('Đã tạo Gist mới thành công! ID: ' + config.gistId);
+        }
+
+        async function updateGist() {
+            // Up timestamp before sync
+            // Note: If we just decided to push "Local", we should probably trust Local's timestamp OR update it to Now?
+            // Let's update it to Now so it becomes the latest Authority.
+            data.lastUpdated = Date.now();
+            saveLocal();
+
+            const content = JSON.stringify(data, null, 2);
+            const response = await fetch(`https://api.github.com/gists/${config.gistId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${config.githubToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: { [GIST_FILENAME]: { content: content } }
+                })
+            });
+            if (!response.ok) throw new Error('Failed to update Gist');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

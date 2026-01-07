@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -126,6 +127,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -186,6 +188,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>💰 Tính Lương Net</h1>
@@ -199,13 +202,16 @@
 
             <div class="form-group">
                 <label for="insuranceSalary">Lương đóng bảo hiểm xã hội (VNĐ)</label>
-                <input type="number" id="insuranceSalary" placeholder="Nhập lương đóng BHXH" min="0" step="1000" required>
+                <input type="number" id="insuranceSalary" placeholder="Nhập lương đóng BHXH" min="0" step="1000"
+                    required>
             </div>
 
             <div class="input-group">
                 <div class="form-group">
                     <label for="unionFee">Công đoàn phí (%)</label>
-                    <input type="number" id="unionFee" placeholder="%" min="0" max="100" step="0.1" required>
+                    <input type="number" id="unionFee" placeholder="%" min="0" max="100" step="0.1" value="0.5"
+                        required>
+                    <span class="info-text">Mặc định: 0.5%</span>
                 </div>
 
                 <div class="form-group">
@@ -239,7 +245,7 @@
 
         <div id="resultSection" class="result-section">
             <div class="result-title">📊 Kết Quả Tính Toán</div>
-            
+
             <div class="result-item">
                 <span class="result-label">Lương Gross:</span>
                 <span class="result-value" id="resultGross">0 VNĐ</span>
@@ -263,6 +269,11 @@
             <div class="result-item">
                 <span class="result-label">Công đoàn phí:</span>
                 <span class="result-value" id="resultUnion">0 VNĐ</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Thuế TNCN:</span>
+                <span class="result-value" id="resultTax">0 VNĐ</span>
             </div>
 
             <div class="result-item">
@@ -329,8 +340,8 @@
             const totalInsurance = bhxh + bhyt + bhtn;
 
             // Tính thu nhập chịu thuế
-            const personalDeduction = 11000000; // Giảm trừ bản thân: 11 triệu/tháng
-            const dependentDeduction = 4400000; // Giảm trừ người phụ thuộc: 4.4 triệu/người/tháng
+            const personalDeduction = 15500000; // Giảm trừ bản thân: 15.5 triệu/tháng (Mới)
+            const dependentDeduction = 6200000; // Giảm trừ người phụ thuộc: 6.2 triệu/người/tháng (Mới)
             const totalDependentDeduction = dependents * dependentDeduction;
 
             const taxableIncome = Math.max(0, grossSalary - totalInsurance - personalDeduction - totalDependentDeduction);
@@ -350,6 +361,7 @@
             document.getElementById('resultBHYT').textContent = formatCurrency(bhyt);
             document.getElementById('resultBHTN').textContent = formatCurrency(bhtn);
             document.getElementById('resultUnion').textContent = formatCurrency(unionFee);
+            document.getElementById('resultTax').textContent = formatCurrency(personalIncomeTax);
             document.getElementById('resultTotalDeduction').textContent = formatCurrency(totalDeduction);
             document.getElementById('resultNet').textContent = formatCurrency(netSalary);
 
@@ -358,7 +370,7 @@
         }
 
         // Xử lý sự kiện submit form
-        document.getElementById('salaryForm').addEventListener('submit', function(e) {
+        document.getElementById('salaryForm').addEventListener('submit', function (e) {
             e.preventDefault();
             calculateNetSalary();
         });
@@ -366,8 +378,8 @@
         // Tự động tính khi thay đổi giá trị
         const inputs = document.querySelectorAll('input[type="number"]');
         inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                if (document.getElementById('grossSalary').value && 
+            input.addEventListener('input', function () {
+                if (document.getElementById('grossSalary').value &&
                     document.getElementById('insuranceSalary').value) {
                     calculateNetSalary();
                 }
@@ -375,4 +387,5 @@
         });
     </script>
 </body>
+
 </html>

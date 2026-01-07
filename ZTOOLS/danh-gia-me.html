@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh Giá ME - Upload Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 30px;
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            text-align: center;
+            background: #f9f9f9;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .file-label:hover {
+            transform: translateY(-2px);
+        }
+
+        .confirmation-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .confirmation-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .member-card {
+            background: #f5f7fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .member-guideline-box {
+            background: #fff;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .member-name-box {
+            background: #fff;
+            border: 3px solid #dc3545;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        .member-number {
+            display: inline-block;
+            background: #dc3545;
+            color: white;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-size: 1.1em;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .member-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .member-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .criteria-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .criteria-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .criteria-content {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 8px;
+        }
+
+        .attr-id-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+
+        .token-input-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-value {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Đánh Giá ME - Upload Excel</h1>
+        <p class="subtitle">Upload file Excel để xử lý đánh giá thành viên</p>
+
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                <label for="excelFile" class="file-label">📁 Chọn File Excel</label>
+            </div>
+            <p style="margin-top: 15px; color: #666;">Vui lòng chọn file Excel có sheet [04_Đánh giá ME]</p>
+        </div>
+
+        <div id="confirmationSection" class="confirmation-section">
+            <div class="token-input-section">
+                <div class="form-group">
+                    <label for="tokenInput">Token (chung cho tất cả)</label>
+                    <input type="text" id="tokenInput" placeholder="Nhập token" required />
+                </div>
+                <div class="form-group">
+                    <label for="cookieInput">Cookie (chung cho tất cả)</label>
+                    <textarea id="cookieInput" placeholder="Nhập cookie từ browser (copy từ Request Headers)" required></textarea>
+                </div>
+            </div>
+
+            <div id="membersContainer"></div>
+
+            <button id="submitBtn" class="submit-btn">Gửi Đánh Giá</button>
+            
+            <div id="loading" class="loading">
+                ⏳ Đang xử lý, vui lòng đợi...
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mapping tiêu chí với attr_id
+        const criteriaMapping = {
+            'Năng suất, chất lương công việc:': 17,
+            'Thái độ, trách nhiệm:': 18,
+            'Làm việc nhóm:': 18,
+            'Thành tích, cần biểu dương:': 17,
+            'Phốt:': null,
+            'Đánh giá chung:': null
+        };
+
+        let excelData = null;
+
+        // Xử lý upload file
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Tìm sheet [04_Đánh giá ME]
+                    let targetSheet = null;
+                    for (let sheetName of workbook.SheetNames) {
+                        if (sheetName.includes('04_Đánh giá ME') || sheetName.includes('04_Danh gia ME')) {
+                            targetSheet = workbook.Sheets[sheetName];
+                            break;
+                        }
+                    }
+
+                    if (!targetSheet) {
+                        alert('Không tìm thấy sheet [04_Đánh giá ME] trong file Excel!');
+                        return;
+                    }
+
+                    // Parse dữ liệu từ sheet
+                    excelData = parseExcelData(targetSheet);
+                    
+                    if (!excelData || excelData.length === 0) {
+                        alert('Không tìm thấy dữ liệu member nào trong file Excel! Vui lòng kiểm tra lại cấu trúc file.');
+                        return;
+                    }
+                    
+                    console.log(`Đã parse được ${excelData.length} member(s):`, excelData.map(m => m.name));
+                    
+                    // Hiển thị màn hình xác nhận
+                    displayConfirmation(excelData);
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    alert('Lỗi khi đọc file Excel: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Parse dữ liệu từ Excel sheet
+        function parseExcelData(sheet) {
+            const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            const members = [];
+            
+            // Tìm cột Members, Tiêu chí, và cột đánh giá (thường là cột E - 2024/12)
+            let memberCol = -1;
+            let criteriaCol = -1;
+            let evalCol = -1;
+
+            // Tìm header row
+            // for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+            //     for (let j = 0; j < jsonData[i].length; j++) {
+            //         const cell = String(jsonData[i][j] || '').trim();
+            //         if (cell.toLowerCase().includes('members') || cell.toLowerCase().includes('thành viên')) {
+            //             memberCol = j;
+            //         }
+            //         if (cell.toLowerCase().includes('tiêu chí') || cell.toLowerCase().includes('tieu chi')) {
+            //             criteriaCol = j;
+            //         }
+            //         if (cell.match(/\d{4}\/\d{2}/) || cell.includes('2024')) {
+            //             evalCol = j;
+            //         }
+            //     }
+            // }
+
+            // Nếu không tìm thấy header, dùng mặc định
+            if (memberCol === -1) memberCol = 1; // Column B
+            if (criteriaCol === -1) criteriaCol = 2; // Column C
+            if (evalCol === -1) evalCol = 4; // Column E
+
+            // Logic: Bắt đầu từ row 3 (index 2), mỗi member chiếm 7 rows
+            // Row 3, 10, 17, 24, ... (index 2, 9, 16, 23, ...)
+            // Tên member ở row thứ 2 của mỗi nhóm (row 4, 11, 18, ... = startRow + 1)
+            const START_ROW = 2; // Row thứ 3 (index bắt đầu từ 0)
+            const ROWS_PER_MEMBER = 7;
+            
+            let memberIndex = 0;
+            let startRow = START_ROW;
+            
+            while (startRow < jsonData.length) {
+                // Lấy member name từ row thứ 2 của mỗi nhóm (startRow + 1)
+                // Tên member ở CỘT B (memberCol), KHÔNG phải cột E
+                const memberNameRow = startRow + 1;
+                if (memberNameRow >= jsonData.length) {
+                    break;
+                }
+                
+                const memberRow = jsonData[memberNameRow];
+                
+                // QUAN TRỌNG: Lấy tên member từ cột B (memberCol = 1), KHÔNG lấy từ cột E (evalCol = 4)
+                const memberName = String(memberRow[memberCol] || '').trim();
+                
+                // // Debug: Log để kiểm tra
+                // console.log(`Member ${memberIndex + 1}: Row ${memberNameRow + 1}`);
+                // console.log(`  - Col B (${memberCol}): "${memberName}"`);
+                // console.log(`  - Col E (${evalCol}): "${String(memberRow[evalCol] || '').trim()}"`);
+                
+                // Nếu không có member name, dừng lại
+                if (!memberName || memberName.length === 0) {
+                    break;
+                }
+                
+                // Tạo member mới với tên từ cột B
+                const member = {
+                    name: memberName,  // Tên từ cột B
+                    criteria: {}
+                };
+                
+                // Parse các tiêu chí từ các row còn lại (startRow + 2 đến startRow + 6)
+                // Bỏ qua row đầu tiên (startRow) và row có member name (startRow + 1)
+                // Tiêu chí ở cột C (criteriaCol), giá trị ở cột E (evalCol)
+                for (let i = 0; i < ROWS_PER_MEMBER && (startRow + i) < jsonData.length; i++) {
+                    const row = jsonData[startRow + i];
+                    const criteria = String(row[criteriaCol] || '').trim();  // Cột C
+                    const evalValue = String(row[evalCol] || '').trim();     // Cột E
+                    
+                    // Nếu có tiêu chí, thêm vào member
+                    if (criteria && criteria.length > 0) {
+                        member.criteria[criteria] = evalValue || '';
+                    }
+                }
+                
+                // Chỉ thêm member nếu có ít nhất một tiêu chí
+                if (Object.keys(member.criteria).length > 0) {
+                    members.push(member);
+                }
+                
+                // Chuyển sang member tiếp theo (7 rows sau)
+                memberIndex++;
+                startRow = START_ROW + (memberIndex * ROWS_PER_MEMBER);
+            }
+
+            console.log('Parsed members:', members);
+            return members;
+        }
+
+        // Hiển thị màn hình xác nhận
+        function displayConfirmation(data) {
+            const container = document.getElementById('membersContainer');
+            container.innerHTML = '';
+
+            data.forEach((member, index) => {
+                console.log(member);
+                
+                const memberCard = document.createElement('div');
+                memberCard.className = 'member-card';
+                
+                let html = `
+                    <div class="member-name-box">
+                        <span class="member-number">${index + 1}</span>
+                        <span class="member-name">${member.name || 'Chưa có tên'}</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="userId_${index}">ID User</label>
+                        <input type="text" id="userId_${index}" placeholder="Nhập ID user" required />
+                    </div>
+                `;
+
+                // Hiển thị các tiêu chí
+                for (const [criteria, value] of Object.entries(member.criteria)) {
+                    console.log(criteria);
+                    
+                    const attrId = criteriaMapping[criteria] !== undefined ? criteriaMapping[criteria] : null;
+                    const attrIdDisplay = attrId !== null ? attrId : 'null';
+                    
+                    html += `
+                        <div class="criteria-item">
+                            <div class="criteria-title">
+                                ${criteria}
+                                <span class="attr-id-badge">attr_id: ${attrIdDisplay}</span>
+                            </div>
+                            <div class="criteria-content">${value || '<span class="empty-value">N/A</span>'}</div>
+                        </div>
+                    `;
+                }
+
+                memberCard.innerHTML = html;
+                container.appendChild(memberCard);
+            });
+
+            document.getElementById('confirmationSection').classList.add('show');
+        }
+
+        // Gửi đánh giá
+        document.getElementById('submitBtn').addEventListener('click', async function() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                alert('Vui lòng nhập token!');
+                return;
+            }
+
+            if (!excelData || excelData.length === 0) {
+                alert('Không có dữ liệu để gửi!');
+                return;
+            }
+
+            // Lấy user IDs
+            const userIds = [];
+            for (let i = 0; i < excelData.length; i++) {
+                const userId = document.getElementById(`userId_${i}`).value.trim();
+                if (!userId) {
+                    alert(`Vui lòng nhập ID user cho ${excelData[i].name}!`);
+                    return;
+                }
+                userIds.push(userId);
+            }
+
+            // Disable button và hiển thị loading
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            statusMessage.className = 'status-message';
+            statusMessage.textContent = '';
+
+            try {
+                // Loop qua từng member
+                for (let i = 0; i < excelData.length; i++) {
+                    const member = excelData[i];
+                    const userId = userIds[i];
+
+                    // Gọi API cho từng tiêu chí có attr_id 17 hoặc 18
+                    for (const [criteria, value] of Object.entries(member.criteria)) {
+                        const attrId = criteriaMapping[criteria];
+                        
+                        // Chỉ gửi nếu có attr_id (17 hoặc 18) và có giá trị
+                        if (attrId !== null && attrId !== undefined && value && value.trim() && value.trim() !== 'N/A') {
+                            // Đặc biệt: gộp "Thái độ, trách nhiệm" và "Làm việc nhóm" (cùng attr_id 18)
+                            if (attrId === 18 && (criteria === 'Thái độ, trách nhiệm' || criteria === 'Làm việc nhóm')) {
+                                // Kiểm tra xem đã gửi cho attr_id 18 chưa (để gộp 2 tiêu chí này)
+                                const thaiDo = member.criteria['Thái độ, trách nhiệm'] || '';
+                                const lamViecNhom = member.criteria['Làm việc nhóm'] || '';
+                                
+                                // Chỉ gửi một lần khi xử lý "Thái độ, trách nhiệm"
+                                if (criteria === 'Thái độ, trách nhiệm') {
+                                    const combinedText = [];
+                                    if (thaiDo && thaiDo.trim() && thaiDo.trim() !== 'N/A') {
+                                        combinedText.push(thaiDo.trim());
+                                    }
+                                    if (lamViecNhom && lamViecNhom.trim() && lamViecNhom.trim() !== 'N/A') {
+                                        combinedText.push(lamViecNhom.trim());
+                                    }
+                                    
+                                    if (combinedText.length > 0) {
+                                        const payload = {
+                                            _token: token,
+                                            eval_ids: [userId],
+                                            return_item: 1,
+                                            attr_id: 18,
+                                            comment_text: combinedText.join('\n\n')
+                                        };
+                                        await callAPI('https://rikkei.vn/monthly-evaluation/comment/add', payload, cookie);
+                                    }
+                                }
+                                // Bỏ qua "Làm việc nhóm" vì đã gộp với "Thái độ, trách nhiệm"
+                            } else {
+                                // Gửi riêng cho các tiêu chí khác
+                                const payload = {
+                                    _token: token,
+                                    eval_ids: [userId],
+                                    return_item: 1,
+                                    attr_id: attrId,
+                                    comment_text: value.trim()
+                                };
+                                await callAPI('https://rikkei.vn/monthly-evaluation/comment/add', payload, cookie);
+                            }
+                        }
+                    }
+
+                    // Gọi API cho Phốt + Đánh giá chung (attr_id = null)
+                    const phoValue = member.criteria['Phốt'] || '';
+                    const danhGiaChungValue = member.criteria['Đánh giá chung'] || '';
+                    
+                    // Chỉ gửi nếu có ít nhất một trong hai giá trị
+                    if ((phoValue && phoValue.trim() && phoValue.trim() !== 'N/A') || 
+                        (danhGiaChungValue && danhGiaChungValue.trim() && danhGiaChungValue.trim() !== 'N/A')) {
+                        const combinedText = [];
+                        if (phoValue && phoValue.trim() && phoValue.trim() !== 'N/A') {
+                            combinedText.push(`Phốt:\n${phoValue.trim()}`);
+                        }
+                        if (danhGiaChungValue && danhGiaChungValue.trim() && danhGiaChungValue.trim() !== 'N/A') {
+                            combinedText.push(`Đánh giá chung:\n${danhGiaChungValue.trim()}`);
+                        }
+
+                        if (combinedText.length > 0) {
+                            const payload = {
+                                _token: token,
+                                eval_ids: [userId],
+                                return_item: 1,
+                                attr_id: null,
+                                comment_text: combinedText.join('\n\n')
+                            };
+
+                            await callAPI('https://rikkei.vn/monthly-evaluation/comment/add', payload, cookie);
+                        }
+                    }
+                }
+
+                // Hiển thị thông báo thành công
+                statusMessage.className = 'status-message success';
+                statusMessage.textContent = '✅ Đã gửi đánh giá thành công cho tất cả thành viên!';
+            } catch (error) {
+                console.error('Error:', error);
+                statusMessage.className = 'status-message error';
+                statusMessage.textContent = '❌ Lỗi: ' + error.message;
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+
+        // Hàm gọi API
+        async function callAPI(url, payload, cookie) {
+            // Sử dụng URLSearchParams để match với Content-Type: application/x-www-form-urlencoded
+            const params = new URLSearchParams();
+            
+            // Thêm các field vào params
+            params.append('_token', payload._token);
+            payload.eval_ids.forEach(id => {
+                params.append('eval_ids[]', id);
+            });
+            params.append('return_item', payload.return_item.toString());
+            if (payload.attr_id !== null && payload.attr_id !== undefined) {
+                params.append('attr_id', payload.attr_id.toString());
+            }
+            params.append('comment_text', payload.comment_text);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-KI-Safekids-Ajax-Request': 'Ajax_Request',
+                    'Origin': 'https://rikkei.vn',
+                    'Referer': 'https://rikkei.vn/monthly-evaluation/edit',
+                    'Accept': '*/*',
+                    'Cookie': cookie
+                },
+                credentials: 'include', // Để gửi cookie tự động
+                body: params.toString()
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        }
+    </script>
+</body>
+</html>
+

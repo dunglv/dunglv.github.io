@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Mã QR - QR Code Generator</title>
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            background: var(--glass-bg);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 900px;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h1 {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Input Section */
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .color-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .color-input:hover {
+            border-color: #ccc;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 8px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: white;
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.5);
+        }
+
+        /* Preview Section */
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px dashed #e0e0e0;
+        }
+
+        #qrContainer {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            /* Ensure images inside don't overflow */
+            max-width: 100%;
+        }
+
+        #qrContainer img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .btn-download {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-download:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-download:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f0f0f0;
+            border-color: #ddd;
+            color: #999;
+        }
+
+        .back-link {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📱 Tạo Mã QR</h1>
+
+        <div class="input-section">
+            <div class="form-group">
+                <label>Nội dung</label>
+                <textarea id="qrText" placeholder="Nhập đường dẫn URL, văn bản, hoặc số điện thoại..."
+                    spellcheck="false"></textarea>
+            </div>
+
+            <div class="color-group">
+                <label class="color-input">
+                    <input type="color" id="colorDark" value="#000000">
+                    <span>Màu mã</span>
+                </label>
+                <label class="color-input">
+                    <input type="color" id="colorLight" value="#ffffff">
+                    <span>Màu nền</span>
+                </label>
+            </div>
+
+            <button class="btn btn-primary" id="generateBtn">Tạo QR Code</button>
+        </div>
+
+        <div class="preview-section">
+            <div id="qrContainer"></div>
+            <button class="btn btn-download" id="downloadBtn" disabled>
+                <span>⬇️ Tải xuống</span>
+            </button>
+        </div>
+
+        <a href="index.html" class="back-link">← Quay lại ZTools</a>
+    </div>
+
+    <script>
+        const qrText = document.getElementById('qrText');
+        const colorDark = document.getElementById('colorDark');
+        const colorLight = document.getElementById('colorLight');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const qrContainer = document.getElementById('qrContainer');
+
+        let qrcode = null;
+
+        // Init QR Code
+        function generateQR() {
+            const text = qrText.value.trim();
+            if (!text) {
+                alert('Vui lòng nhập nội dung!');
+                return;
+            }
+
+            qrContainer.innerHTML = '';
+
+            try {
+                // QRCode.js constructor takes element or element ID
+                // But it appends valid canvas/img.
+                // We create a new instance each time to handle updates properly (or clear container)
+                qrcode = new QRCode(qrContainer, {
+                    text: text,
+                    width: 256,
+                    height: 256,
+                    colorDark: colorDark.value,
+                    colorLight: colorLight.value,
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // Enable download after a short delay to ensure rendering
+                setTimeout(() => {
+                    downloadBtn.disabled = false;
+                }, 100);
+
+            } catch (e) {
+                console.error(e);
+                alert('Có lỗi xảy ra khi tạo QR Code');
+            }
+        }
+
+        function downloadQR() {
+            const img = qrContainer.querySelector('img');
+            if (img && img.src) {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.download = 'qrcode.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        generateBtn.addEventListener('click', generateQR);
+
+        // Auto generate on settings change (optional, maybe just button click is safer for heavy inputs)
+        // Let's stick to button click for "Generate", but maybe preview color changes if QR exists?
+        // QRCode.js doesn't support live update easily without re-creating.
+        // So we will just re-generate if button is clicked.
+
+        downloadBtn.addEventListener('click', downloadQR);
+
+        // Enter key to generate
+        qrText.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // prevent new line
+                generateQR();
+            }
+        });
+
+    </script>
+</body>
+
+</html>
