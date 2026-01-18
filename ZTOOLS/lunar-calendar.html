@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Vạn Niên & Quản Lý Sự Kiện</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #7c4dff;
+            --secondary-color: #00bcd4;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --text-color: #fff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --day-hover: rgba(255, 255, 255, 0.2);
+            --current-day: rgba(124, 77, 255, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            height: 90vh;
+            /* Fixed height required for scrollable flex children */
+            overflow: hidden;
+            /* Contain inner scrolls */
+        }
+
+        /* Calendar Section */
+        .calendar-section {
+            flex: 2;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* for proper scrolling if needed */
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 10px;
+        }
+
+        .month-year-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .custom-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .custom-select option {
+            background: #16213e;
+            color: white;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            overflow-y: auto;
+            width: 100%;
+            padding: 2px;
+            /* Small padding to prevent shadow clipping */
+            flex-grow: 1;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            min-width: 0;
+            /* Allow shrinking below content size */
+            overflow: hidden;
+            /* Hide internal overflow */
+        }
+
+        .day-cell:hover {
+            background: var(--day-hover);
+            transform: scale(1.02);
+        }
+
+        .day-cell.current-month {
+            opacity: 1;
+        }
+
+        .day-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .day-cell.today {
+            background: var(--current-day);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .day-cell.has-event::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--secondary-color);
+        }
+
+        .day-cell.holiday {
+            color: #ff5252;
+            /* Red text for holidays */
+        }
+
+        .day-cell.holiday .lunar-date {
+            color: #ff8a80;
+        }
+
+        /* Holiday Tooltip */
+        .day-cell.holiday::before {
+            content: attr(data-holiday);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .day-cell.holiday:hover::before {
+            opacity: 1;
+        }
+
+        .gregorian-date {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .lunar-date {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* Sidebar / Event Section */
+        .event-section {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Contain children */
+            height: 100%;
+            /* Ensure it fills container height */
+        }
+
+        .event-header {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .view-all-btn {
+            font-size: 0.6em;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: white;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .view-all-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .selected-date-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .selected-date-info h3 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            color: var(--secondary-color);
+        }
+
+        .event-list {
+            flex: 1 1 0;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            margin-top: 15px;
+            padding-right: 5px;
+            max-height: 350px;
+            /* Show approx 5 items */
+            min-height: 100px;
+        }
+
+        .event-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .event-delete {
+            background: none;
+            border: none;
+            color: #ff5252;
+            cursor: pointer;
+            padding: 2px 5px;
+            margin-left: 5px;
+            font-size: 1.2em;
+        }
+
+        /* Form */
+        .add-event-form {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            max-height: 50%;
+            /* Allow it to take up to 50% if needed, but flex-grow on list usually dominates */
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.85em;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        button.btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), #512da8);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        button.btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16213e;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .events-table th,
+        .events-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .events-table th {
+            color: var(--secondary-color);
+        }
+
+        .events-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                flex-direction: column;
+                overflow-y: auto;
+                max-height: none;
+            }
+
+            .calendar-header {
+                flex-direction: column;
+            }
+
+            .month-year-selector {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .event-section {
+                min-width: auto;
+            }
+
+            .day-cell {
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <button class="nav-btn" id="prevMonth">❮</button>
+                <div class="month-year-selector">
+                    <select id="monthSelect" class="custom-select"></select>
+                    <select id="yearSelect" class="custom-select"></select>
+                </div>
+                <button class="nav-btn" id="nextMonth">❯</button>
+            </div>
+
+            <div class="weekdays">
+                <div>T2</div>
+                <div>T3</div>
+                <div>T4</div>
+                <div>T5</div>
+                <div>T6</div>
+                <div>T7</div>
+                <div>CN</div>
+            </div>
+
+            <div class="days-grid" id="daysGrid"></div>
+        </div>
+
+        <div class="event-section">
+            <div class="date-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h2>Chi Tiết</h2>
+                    <button class="view-all-btn" id="viewAllBtn">Xem Tất Cả</button>
+                </div>
+                <div class="selected-date-display">
+                    <div id="selectedDateText"
+                        style="color: var(--secondary-color); font-weight: 700; font-size: 1.1em;"></div>
+                    <div id="selectedLunarText" style="font-size: 0.9em; opacity: 0.8; margin-top: 4px;"></div>
+                    <div id="selectedHolidayText"
+                        style="color: #ff5252; font-weight: bold; margin-top: 8px; font-size: 0.95em; display: none;">
+                    </div>
+                </div>
+            </div>
+            <div class="event-list" id="eventList"></div>
+
+            <div class="add-event-form">
+                <div class="form-group">
+                    <label>Nội dung</label>
+                    <input type="text" class="form-control" id="eventTitle" placeholder="Họp, sinh nhật...">
+                </div>
+                <div class="form-group">
+                    <label>Giờ</label>
+                    <input type="time" class="form-control" id="eventTime">
+                </div>
+                <div class="form-group">
+                    <label>Email Nhắc Nhở</label>
+                    <input type="email" class="form-control" id="eventEmail" placeholder="abc@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Thông báo trước</label>
+                    <select class="form-control" id="reminderTime">
+                        <option value="0">Đúng giờ</option>
+                        <option value="5">5 phút</option>
+                        <option value="15">15 phút</option>
+                        <option value="30">30 phút</option>
+                        <option value="60">1 tiếng</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="addEventBtn">Thêm & Đặt Nhắc Nhở</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Events Modal -->
+    <div id="allEventsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tất Cả Sự Kiện</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="eventSearchInput" class="form-control" placeholder="🔍 Tìm kiếm nội dung..."
+                        style="flex: 2;">
+                    <input type="date" id="eventDateSearchInput" class="form-control" style="flex: 1;">
+                    <button id="bulkDeleteBtn"
+                        style="background: #ff5252; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: none; white-space: nowrap;">
+                        🗑️ Xóa đã chọn (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+                <div style="min-height: 300px;"> <!-- Min height to prevent jumping -->
+                    <table class="events-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox"
+                                        id="selectAllCheckbox" style="cursor: pointer; width: 16px; height: 16px;"></th>
+                                <th>Ngày</th>
+                                <th>Giờ</th>
+                                <th>Nội dung</th>
+                                <th>Email</th>
+                                <th>Tác vụ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allEventsTableBody">
+                            <!-- Content -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls"
+                    style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; align-items: center;">
+                    <button id="prevPageBtn" class="nav-btn" style="padding: 5px 15px;">❮</button>
+                    <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
+                        <span>Trang</span>
+                        <input type="number" id="pageNumberInput" class="form-control"
+                            style="width: 60px; padding: 5px; text-align: center; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);"
+                            min="1" value="1">
+                        <span id="pageTotalLabel">/ 1</span>
+                    </div>
+                    <button id="nextPageBtn" class="nav-btn" style="padding: 5px 15px;">❯</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div id="editEventModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Sửa Sự Kiện</h2>
+                <button class="close-modal" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEventKey">
+                <input type="hidden" id="editEventIndex">
+                <div class="form-group">
+                    <label>Nội dung</label>
+                    <input type="text" class="form-control" id="editEventTitle">
+                </div>
+                <div class="form-group">
+                    <label>Giờ</label>
+                    <input type="time" class="form-control" id="editEventTime">
+                </div>
+                <div class="form-group">
+                    <label>Email Nhắc Nhở</label>
+                    <input type="email" class="form-control" id="editEventEmail">
+                </div>
+                <div class="form-group">
+                    <label>Thông báo trước</label>
+                    <select class="form-control" id="editReminderTime">
+                        <option value="0">Đúng giờ</option>
+                        <option value="5">5 phút</option>
+                        <option value="15">15 phút</option>
+                        <option value="30">30 phút</option>
+                        <option value="60">1 tiếng</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="saveEditBtn">Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let events = JSON.parse(localStorage.getItem('myCalendarEvents')) || {};
+
+        // DOM Elements
+        const daysGridEl = document.getElementById('daysGrid');
+        const prevBtn = document.getElementById('prevMonth');
+        const nextBtn = document.getElementById('nextMonth');
+        const monthSelect = document.getElementById('monthSelect');
+        const yearSelect = document.getElementById('yearSelect');
+
+        const selectedDateText = document.getElementById('selectedDateText');
+        const selectedLunarText = document.getElementById('selectedLunarText');
+
+        const eventListEl = document.getElementById('eventList');
+        const eventTitleInput = document.getElementById('eventTitle');
+        const eventTimeInput = document.getElementById('eventTime');
+        const eventEmailInput = document.getElementById('eventEmail');
+        const reminderTimeInput = document.getElementById('reminderTime');
+        const addEventBtn = document.getElementById('addEventBtn');
+
+        const viewAllBtn = document.getElementById('viewAllBtn');
+        const allEventsModal = document.getElementById('allEventsModal');
+        const closeModal = document.getElementById('closeModal');
+        const allEventsTableBody = document.getElementById('allEventsTableBody');
+
+        // Edit Modal Elements
+        const editEventModal = document.getElementById('editEventModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+        const editEventKeyInput = document.getElementById('editEventKey');
+        const editEventIndexInput = document.getElementById('editEventIndex');
+        const editEventTitleInput = document.getElementById('editEventTitle');
+        const editEventTimeInput = document.getElementById('editEventTime');
+        const editEventEmailInput = document.getElementById('editEventEmail');
+        const editReminderTimeInput = document.getElementById('editReminderTime');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+
+        // Modal Controls
+        const eventSearchInput = document.getElementById('eventSearchInput');
+        const eventDateSearchInput = document.getElementById('eventDateSearchInput');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageNumberInput = document.getElementById('pageNumberInput');
+        const pageTotalLabel = document.getElementById('pageTotalLabel');
+
+        // Bulk Delete Controls
+
+        // Pagination State
+        let currentModalPage = 1;
+        const itemsPerPage = 7;
+        let currentSearchTerm = "";
+        let currentDateSearch = "";
+
+
+        // Bulk Delete Global Elements
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        let selectedEventIds = new Set();
+
+        // Request Permission
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        // ... (Init and Core Logic unchanged) ...
+
+        // --- View All Modal ---
+        function getAllEventsArray() {
+            let flat = [];
+            Object.keys(events).forEach(dateKey => {
+                events[dateKey].forEach((ev, idx) => {
+                    // Ensure ID exists
+                    if (!ev.id) ev.id = Date.now() + Math.random();
+                    flat.push({ ...ev, dateKey, originalIdx: idx });
+                });
+            });
+            // Sort by date YYYY-MM-DD
+            return flat.sort((a, b) => {
+                const dateA = new Date(a.dateKey);
+                const dateB = new Date(b.dateKey);
+                if (dateA - dateB !== 0) return dateA - dateB;
+                return a.time.localeCompare(b.time);
+            });
+        }
+
+        function renderAllEventsTable() {
+            allEventsTableBody.innerHTML = '';
+
+            let allEvents = getAllEventsArray();
+
+            // Search Filters
+            if (currentSearchTerm) {
+                const term = currentSearchTerm.toLowerCase();
+                allEvents = allEvents.filter(ev =>
+                    ev.title.toLowerCase().includes(term) ||
+                    ev.email?.toLowerCase().includes(term) ||
+                    ev.time.includes(term)
+                );
+            }
+
+            if (currentDateSearch) {
+                const [y, m, d] = currentDateSearch.split('-');
+                const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                allEvents = allEvents.filter(ev => ev.dateKey === searchKey);
+            }
+
+            // Pagination Logic
+            const totalPages = Math.ceil(allEvents.length / itemsPerPage) || 1;
+
+            if (currentModalPage > totalPages) currentModalPage = totalPages;
+            if (currentModalPage < 1) currentModalPage = 1;
+
+            // UI Controls
+            pageNumberInput.value = currentModalPage;
+            pageNumberInput.max = totalPages;
+            pageTotalLabel.textContent = `/ ${totalPages}`;
+
+            prevPageBtn.disabled = currentModalPage === 1;
+            nextPageBtn.disabled = currentModalPage === totalPages;
+            prevPageBtn.style.opacity = currentModalPage === 1 ? 0.3 : 1;
+            nextPageBtn.style.opacity = currentModalPage === totalPages ? 0.3 : 1;
+
+            // Slice page
+            const start = (currentModalPage - 1) * itemsPerPage;
+            const pagedEvents = allEvents.slice(start, start + itemsPerPage);
+
+            updateBulkDeleteButton();
+
+            // Update Select All Checkbox state
+            if (pagedEvents.length > 0) {
+                const allOnPageSelected = pagedEvents.every(ev => selectedEventIds.has(ev.id));
+                const someOnPageSelected = pagedEvents.some(ev => selectedEventIds.has(ev.id));
+                selectAllCheckbox.checked = allOnPageSelected;
+                selectAllCheckbox.indeterminate = !allOnPageSelected && someOnPageSelected;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+
+            if (pagedEvents.length === 0) {
+                allEventsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; opacity: 0.5; padding: 30px;">Không tìm thấy dữ liệu</td></tr>';
+                return;
+            }
+
+            pagedEvents.forEach(ev => {
+                const tr = document.createElement('tr');
+                const isSelected = selectedEventIds.has(ev.id);
+
+                tr.innerHTML = `
+                    <td style="text-align: center;">
+                        <input type="checkbox" class="event-checkbox" value="${ev.id}" ${isSelected ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                    </td>
+                    <td>${ev.dateKey}</td>
+                    <td>${ev.time}</td>
+                    <td>${ev.title}</td>
+                    <td>${ev.email || '-'}</td>
+                    <td>
+                        <button class="event-delete" onclick="openEditModal('${ev.dateKey}', ${ev.originalIdx})" style="color: #4CAF50; margin-right: 10px;">✎</button>
+                        <button class="event-delete" onclick="window.deleteEventThenRefresh('${ev.dateKey}', ${ev.originalIdx})">❌</button>
+                    </td>
+                `;
+                allEventsTableBody.appendChild(tr);
+            });
+
+            // Row Checkbox Listeners
+            document.querySelectorAll('.event-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = parseFloat(e.target.value);
+                    if (e.target.checked) selectedEventIds.add(id);
+                    else selectedEventIds.delete(id);
+                    renderAllEventsTable();
+                });
+            });
+        }
+
+        window.deleteEventThenRefresh = function (key, idx) {
+            if (confirm('Xóa sự kiện này?')) {
+                events[key].splice(idx, 1);
+                if (events[key].length === 0) delete events[key];
+                saveEvents();
+            }
+        }
+
+        function updateBulkDeleteButton() {
+            if (selectedEventIds.size > 0) {
+                bulkDeleteBtn.style.display = 'block';
+                selectedCountSpan.textContent = selectedEventIds.size;
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+
+        // Header Select All Listener
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const allEvents = getAllEventsArray();
+            let filtered = allEvents;
+            if (currentSearchTerm) {
+                const term = currentSearchTerm.toLowerCase();
+                filtered = filtered.filter(ev =>
+                    ev.title.toLowerCase().includes(term) ||
+                    ev.email?.toLowerCase().includes(term) ||
+                    ev.time.includes(term)
+                );
+            }
+            if (currentDateSearch) {
+                const [y, m, d] = currentDateSearch.split('-');
+                const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                filtered = filtered.filter(ev => ev.dateKey === searchKey);
+            }
+
+            const start = (currentModalPage - 1) * itemsPerPage;
+            const pagedEvents = filtered.slice(start, start + itemsPerPage);
+
+            pagedEvents.forEach(ev => {
+                if (e.target.checked) selectedEventIds.add(ev.id);
+                else selectedEventIds.delete(ev.id);
+            });
+
+            renderAllEventsTable();
+        });
+
+        // Bulk Delete Action
+        bulkDeleteBtn.addEventListener('click', () => {
+            if (confirm(`Bạn có chắc muốn xóa ${selectedEventIds.size} sự kiện đã chọn?`)) {
+                Object.keys(events).forEach(key => {
+                    // Filter out deleted IDs
+                    const originalCount = events[key].length;
+                    events[key] = events[key].filter(ev => !selectedEventIds.has(ev.id));
+
+                    if (events[key].length === 0) delete events[key];
+                });
+
+                selectedEventIds.clear();
+                saveEvents();
+            }
+        });
+
+        // Search Input Listeners
+        eventSearchInput.addEventListener('input', (e) => {
+            currentSearchTerm = e.target.value;
+            currentModalPage = 1;
+            renderAllEventsTable();
+        });
+
+        eventDateSearchInput.addEventListener('change', (e) => {
+            currentDateSearch = e.target.value;
+            currentModalPage = 1;
+            renderAllEventsTable();
+        });
+
+        // ... (Pagination listeners unchanged) ...
+
+        // ... (Modal reset logic) ...
+        viewAllBtn.onclick = () => {
+            currentModalPage = 1;
+            currentSearchTerm = "";
+            currentDateSearch = "";
+            eventSearchInput.value = "";
+            eventDateSearchInput.value = "";
+            selectedEventIds.clear();
+            renderAllEventsTable();
+            allEventsModal.classList.add('active');
+        }
+
+        // --- Initialization ---
+        function initSelectors() {
+            // Fill months
+            for (let i = 0; i < 12; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = `Tháng ${i + 1}`;
+                monthSelect.appendChild(opt);
+            }
+            // Fill years (1900 - 2100)
+            const currentYear = new Date().getFullYear();
+            for (let i = 1900; i <= 2100; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = i;
+                yearSelect.appendChild(opt);
+            }
+
+            // Listeners
+            monthSelect.addEventListener('change', () => {
+                currentDate.setMonth(parseInt(monthSelect.value));
+                renderCalendar();
+            });
+            yearSelect.addEventListener('change', () => {
+                currentDate.setFullYear(parseInt(yearSelect.value));
+                renderCalendar();
+            });
+        }
+
+        function init() {
+            initSelectors();
+            updateSelectors();
+            renderCalendar();
+            selectDate(new Date());
+            setupReminders();
+        }
+
+        // --- Core Logic ---
+        function saveEvents() {
+            localStorage.setItem('myCalendarEvents', JSON.stringify(events));
+            renderCalendar();
+            renderEvents(selectedDate);
+            if (allEventsModal.classList.contains('active')) {
+                renderAllEventsTable(); // update modal/page if open
+            }
+        }
+
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+        }
+
+        function getLunarDate(date) {
+            try {
+                const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+                const lunar = solar.getLunar();
+                return {
+                    day: lunar.getDay(),
+                    month: lunar.getMonth(),
+                    year: lunar.getYear(),
+                    dayString: `Ngày ${lunar.getDay()}/${lunar.getMonth()}`,
+                    fullString: `Âm lịch: ${lunar.getDay()}/${lunar.getMonth()}/${lunar.getYear()}`
+                };
+            } catch (e) { return { day: '', fullString: '' }; }
+        }
+
+        function updateSelectors() {
+            monthSelect.value = currentDate.getMonth();
+            yearSelect.value = currentDate.getFullYear();
+        }
+
+        function renderCalendar() {
+            daysGridEl.innerHTML = '';
+            updateSelectors(); // Ensure selects match current logic date
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+
+            // Adjust for Monday start
+            let startDay = firstDayOfMonth.getDay();
+            if (startDay === 0) startDay = 7;
+
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+            // Prev month fill
+            for (let i = 1; i < startDay; i++) {
+                const day = prevMonthLastDay - (startDay - 1 - i);
+                const date = new Date(year, month - 1, day);
+                createDayElement(date, 'other-month');
+            }
+
+            // Current month
+            for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
+                const date = new Date(year, month, i);
+                createDayElement(date, 'current-month');
+            }
+
+            // Next month fill to always keep grid size roughly consistent
+            const totalCells = daysGridEl.children.length;
+            const rows = Math.ceil(totalCells / 7);
+            const remaining = (rows < 6 ? 42 : rows * 7) - totalCells;
+
+            for (let i = 1; i <= remaining; i++) {
+                const date = new Date(year, month + 1, i);
+                createDayElement(date, 'other-month');
+            }
+        }
+
+        function getHoliday(date, lunar) {
+            const d = date.getDate();
+            const m = date.getMonth() + 1;
+            const ld = lunar.day;
+            const lm = lunar.month;
+
+            // Solar Holidays
+            if (d === 1 && m === 1) return "Tết Dương Lịch";
+            if (d === 30 && m === 4) return "Giải phóng miền Nam";
+            if (d === 1 && m === 5) return "Quốc tế Lao động";
+            if (d === 2 && m === 9) return "Quốc khánh";
+
+            // Lunar Holidays
+            if (ld === 1 && lm === 1) return "Tết Nguyên Đán";
+            if (ld === 2 && lm === 1) return "Tết Nguyên Đán";
+            if (ld === 3 && lm === 1) return "Tết Nguyên Đán";
+            if (ld === 10 && lm === 3) return "Giỗ Tổ Hùng Vương";
+
+            // Major Lunar Festivals (Optional)
+            if (ld === 15 && lm === 1) return "Tết Nguyên Tiêu";
+            if (ld === 15 && lm === 4) return "Lễ Phật Đản";
+            if (ld === 5 && lm === 5) return "Tết Đoan Ngọ";
+            if (ld === 15 && lm === 8) return "Tết Trung Thu";
+            if (ld === 23 && lm === 12) return "Ông Công Ông Táo";
+
+            return null;
+        }
+
+        function createDayElement(date, monthClass) {
+            const el = document.createElement('div');
+            el.className = `day-cell ${monthClass}`;
+
+            const today = new Date();
+            if (date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear()) {
+                el.classList.add('today');
+            }
+
+            const key = getDateKey(date);
+            if (events[key] && events[key].length > 0) {
+                el.classList.add('has-event');
+            }
+
+            const lunar = getLunarDate(date);
+            const holiday = getHoliday(date, lunar);
+
+            if (holiday) {
+                el.classList.add('holiday');
+            }
+
+            el.innerHTML = `
+                <div class="gregorian-date">${date.getDate()}</div>
+                <div class="lunar-date">${lunar.day === 1 ? lunar.day + '/' + lunar.month : lunar.day}</div>
+            `;
+
+            el.onclick = () => selectDate(date);
+
+            if (date.toDateString() === selectedDate.toDateString()) {
+                el.style.border = "2px solid var(--secondary-color)";
+            }
+
+            daysGridEl.appendChild(el);
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            const lunar = getLunarDate(date);
+            const holiday = getHoliday(date, lunar);
+            const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+            selectedDateText.textContent = `${dayNames[date.getDay()]}, ${date.getDate()} Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
+            selectedLunarText.textContent = lunar.fullString;
+
+            const selectedHolidayText = document.getElementById('selectedHolidayText');
+            if (holiday) {
+                selectedHolidayText.textContent = `🎉 ${holiday}`;
+                selectedHolidayText.style.display = 'block';
+            } else {
+                selectedHolidayText.style.display = 'none';
+            }
+
+            // Highlight
+            const cells = document.querySelectorAll('.day-cell');
+            cells.forEach(c => c.style.border = 'none');
+            renderCalendar();
+
+            if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
+                currentDate = new Date(date);
+                renderCalendar();
+            } else {
+                renderCalendar();
+            }
+
+            renderEvents(date);
+        }
+
+        function renderEvents(date) {
+            const key = getDateKey(date);
+            const dateEvents = events[key] || [];
+
+            eventListEl.innerHTML = '';
+
+            if (dateEvents.length === 0) {
+                eventListEl.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.3); padding: 20px;">Không có sự kiện nào</div>';
+                return;
+            }
+
+            dateEvents.sort((a, b) => a.time.localeCompare(b.time));
+
+            dateEvents.forEach((ev, index) => {
+                const item = document.createElement('div');
+                item.className = 'event-item';
+                item.innerHTML = `
+                    <div style="flex-grow:1; margin-right: 10px;">
+                        <span style="font-weight:bold; color:var(--secondary-color); font-size: 0.9em">${ev.time}</span>
+                        <span style="font-weight:600">${ev.title}</span>
+                         <div style="font-size: 0.75em; opacity: 0.6; margin-top: 4px;">
+                            ${ev.email ? '✉️ ' + ev.email + ' • ' : ''} 🔔 ${ev.reminder == 0 ? 'Đúng giờ' : ev.reminder + 'p'}
+                        </div>
+                    </div>
+                    <div>
+                        <button class="event-delete" onclick="openEditModal('${key}', ${index})" style="color: #4CAF50; margin-right: 5px;">✎</button>
+                        <button class="event-delete" onclick="deleteEvent('${key}', ${index})">&times;</button>
+                    </div>
+                `;
+                eventListEl.appendChild(item);
+            });
+        }
+
+        function addEvent() {
+            const title = eventTitleInput.value.trim();
+            const time = eventTimeInput.value;
+            const email = eventEmailInput.value.trim();
+            const reminder = parseInt(reminderTimeInput.value);
+
+            if (!title || !time) {
+                alert('Vui lòng nhập nội dung và giờ!');
+                return;
+            }
+
+            const key = getDateKey(selectedDate);
+            if (!events[key]) events[key] = [];
+
+            events[key].push({
+                title,
+                time,
+                email,
+                reminder,
+                id: Date.now()
+            });
+
+            saveEvents();
+
+            eventTitleInput.value = '';
+            eventTimeInput.value = '';
+            eventEmailInput.value = '';
+        }
+
+        // --- Edit Event Logic ---
+        window.openEditModal = function (key, index) {
+            const ev = events[key][index];
+            if (!ev) return;
+
+            editEventKeyInput.value = key;
+            editEventIndexInput.value = index;
+            editEventTitleInput.value = ev.title;
+            editEventTimeInput.value = ev.time;
+            editEventEmailInput.value = ev.email || '';
+            editReminderTimeInput.value = ev.reminder || 0;
+
+            editEventModal.classList.add('active');
+        }
+
+        saveEditBtn.onclick = function () {
+            const key = editEventKeyInput.value;
+            const index = parseInt(editEventIndexInput.value);
+
+            if (events[key] && events[key][index]) {
+                const title = editEventTitleInput.value.trim();
+                const time = editEventTimeInput.value;
+
+                if (!title || !time) {
+                    alert('Vui lòng nhập nội dung và giờ!');
+                    return;
+                }
+
+                // Update
+                events[key][index] = {
+                    ...events[key][index],
+                    title: title,
+                    time: time,
+                    email: editEventEmailInput.value.trim(),
+                    reminder: parseInt(editReminderTimeInput.value)
+                };
+
+                saveEvents();
+                editEventModal.classList.remove('active');
+            }
+        }
+
+        closeEditModal.onclick = () => editEventModal.classList.remove('active');
+        // Close edit modal if clicked outside
+        editEventModal.onclick = (e) => {
+            if (e.target === editEventModal) editEventModal.classList.remove('active');
+        }
+
+
+        window.deleteEvent = function (dateKey, index) {
+            if (confirm('Xóa sự kiện này?')) {
+                events[dateKey].splice(index, 1);
+                saveEvents();
+            }
+        }
+
+        // --- View All Modal ---
+        function getAllEventsArray() {
+            let flat = [];
+            Object.keys(events).forEach(dateKey => {
+                events[dateKey].forEach((ev, idx) => {
+                    flat.push({ ...ev, dateKey, originalIdx: idx });
+                });
+            });
+            // Sort by date YYYY-MM-DD
+            return flat.sort((a, b) => {
+                const dateA = new Date(a.dateKey);
+                const dateB = new Date(b.dateKey);
+                if (dateA - dateB !== 0) return dateA - dateB;
+                return a.time.localeCompare(b.time);
+            });
+        }
+
+        function getAllEventsArray() {
+            let flat = [];
+            Object.keys(events).forEach(dateKey => {
+                events[dateKey].forEach((ev, idx) => {
+                    // Ensure ID exists for robust selection
+                    if (!ev.id) ev.id = Date.now() + Math.random();
+                    flat.push({ ...ev, dateKey, originalIdx: idx });
+                });
+            });
+            // Sort by date YYYY-MM-DD
+            return flat.sort((a, b) => {
+                const dateA = new Date(a.dateKey);
+                const dateB = new Date(b.dateKey);
+                if (dateA - dateB !== 0) return dateA - dateB;
+                return a.time.localeCompare(b.time);
+            });
+        }
+
+        function renderAllEventsTable() {
+            allEventsTableBody.innerHTML = '';
+
+            let allEvents = getAllEventsArray();
+
+            // Search Filters (AND logic)
+            if (currentSearchTerm) {
+                const term = currentSearchTerm.toLowerCase();
+                allEvents = allEvents.filter(ev =>
+                    ev.title.toLowerCase().includes(term) ||
+                    ev.email?.toLowerCase().includes(term) ||
+                    ev.time.includes(term)
+                );
+            }
+
+            if (currentDateSearch) {
+                const [y, m, d] = currentDateSearch.split('-');
+                const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                allEvents = allEvents.filter(ev => ev.dateKey === searchKey);
+            }
+
+            // Pagination Logic
+            const totalPages = Math.ceil(allEvents.length / itemsPerPage) || 1;
+
+            // Handle page drift
+            if (currentModalPage > totalPages) currentModalPage = totalPages;
+            if (currentModalPage < 1) currentModalPage = 1;
+
+            // UI Controls Update
+            pageNumberInput.value = currentModalPage;
+            pageNumberInput.max = totalPages;
+            pageTotalLabel.textContent = `/ ${totalPages}`;
+
+            prevPageBtn.disabled = currentModalPage === 1;
+            nextPageBtn.disabled = currentModalPage === totalPages;
+            prevPageBtn.style.opacity = currentModalPage === 1 ? 0.3 : 1;
+            nextPageBtn.style.opacity = currentModalPage === totalPages ? 0.3 : 1;
+
+            // Slice for current Page
+            const start = (currentModalPage - 1) * itemsPerPage;
+            const pagedEvents = allEvents.slice(start, start + itemsPerPage);
+
+            // Update Bulk Delete UI State
+            if (typeof updateBulkDeleteButton === 'function') {
+                updateBulkDeleteButton();
+            }
+
+            // Update Select All Checkbox logic
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                if (pagedEvents.length > 0) {
+                    // Check if selectedEventIds is defined (it might not be if initialized later)
+                    if (typeof selectedEventIds !== 'undefined') {
+                        const allOnPageSelected = pagedEvents.every(ev => selectedEventIds.has(ev.id));
+                        const someOnPageSelected = pagedEvents.some(ev => selectedEventIds.has(ev.id));
+                        selectAllCheckbox.checked = allOnPageSelected;
+                        selectAllCheckbox.indeterminate = !allOnPageSelected && someOnPageSelected;
+                    }
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            }
+
+            if (pagedEvents.length === 0) {
+                allEventsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; opacity: 0.5; padding: 30px;">Không tìm thấy dữ liệu</td></tr>';
+                return;
+            }
+
+            pagedEvents.forEach(ev => {
+                const tr = document.createElement('tr');
+                const isSelected = (typeof selectedEventIds !== 'undefined') && selectedEventIds.has(ev.id);
+
+                tr.innerHTML = `
+                    <td style="text-align: center;">
+                        <input type="checkbox" class="event-checkbox" value="${ev.id}" ${isSelected ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                    </td>
+                    <td>${ev.dateKey}</td>
+                    <td>${ev.time}</td>
+                    <td>${ev.title}</td>
+                    <td>${ev.email || '-'}</td>
+                    <td>
+                        <button class="event-delete" onclick="openEditModal('${ev.dateKey}', ${ev.originalIdx})" style="color: #4CAF50; margin-right: 10px;">✎</button>
+                        <button class="event-delete" onclick="deleteEventThenRefresh('${ev.dateKey}', ${ev.originalIdx})">❌</button>
+                    </td>
+                `;
+                allEventsTableBody.appendChild(tr);
+            });
+
+            // Attach listeners to new checkboxes
+            document.querySelectorAll('.event-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = parseFloat(e.target.value);
+                    if (typeof selectedEventIds !== 'undefined') {
+                        if (e.target.checked) selectedEventIds.add(id);
+                        else selectedEventIds.delete(id);
+                        renderAllEventsTable(); // Refresh for Select All state
+                    }
+                });
+            });
+        }
+
+        // Search Input Listeners
+        eventSearchInput.addEventListener('input', (e) => {
+            currentSearchTerm = e.target.value;
+            currentModalPage = 1;
+            renderAllEventsTable();
+        });
+
+        eventDateSearchInput.addEventListener('change', (e) => {
+            currentDateSearch = e.target.value;
+            currentModalPage = 1;
+            renderAllEventsTable();
+        });
+
+        // Pagination Listeners
+        prevPageBtn.addEventListener('click', () => {
+            if (currentModalPage > 1) {
+                currentModalPage--;
+                renderAllEventsTable();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            // Recalculate total pages based on current filters logic duplicated for brevity but safe
+            const allEvents = getAllEventsArray();
+            let filtered = allEvents;
+            if (currentSearchTerm) {
+                const term = currentSearchTerm.toLowerCase();
+                filtered = filtered.filter(ev =>
+                    ev.title.toLowerCase().includes(term) ||
+                    ev.email?.toLowerCase().includes(term) ||
+                    ev.time.includes(term)
+                );
+            }
+            if (currentDateSearch) {
+                const [y, m, d] = currentDateSearch.split('-');
+                const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                filtered = filtered.filter(ev => ev.dateKey === searchKey);
+            }
+
+            const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+
+            if (currentModalPage < totalPages) {
+                currentModalPage++;
+                renderAllEventsTable();
+            }
+        });
+
+        pageNumberInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+
+            const allEvents = getAllEventsArray();
+            let filtered = allEvents;
+            if (currentSearchTerm) {
+                const term = currentSearchTerm.toLowerCase();
+                filtered = filtered.filter(ev =>
+                    ev.title.toLowerCase().includes(term) ||
+                    ev.email?.toLowerCase().includes(term) ||
+                    ev.time.includes(term)
+                );
+            }
+            if (currentDateSearch) {
+                const [y, m, d] = currentDateSearch.split('-');
+                const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                filtered = filtered.filter(ev => ev.dateKey === searchKey);
+            }
+            const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+
+            if (val < 1) val = 1;
+            if (val > totalPages) val = totalPages;
+
+            currentModalPage = val;
+            renderAllEventsTable();
+        });
+
+        window.deleteEventThenRefresh = function (key, idx) {
+            if (confirm("Xóa sự kiện này?")) {
+                if (events[key]) {
+                    events[key].splice(idx, 1);
+                    if (events[key].length === 0) delete events[key];
+                    saveEvents();
+                }
+            }
+        }
+
+        viewAllBtn.onclick = () => {
+            // Reset state on open
+            currentModalPage = 1;
+            currentSearchTerm = "";
+            currentDateSearch = "";
+            eventSearchInput.value = "";
+            eventDateSearchInput.value = "";
+            renderAllEventsTable();
+            allEventsModal.classList.add('active');
+        }
+        closeModal.onclick = () => allEventsModal.classList.remove('active');
+        allEventsModal.onclick = (e) => {
+            if (e.target === allEventsModal) allEventsModal.classList.remove('active');
+        }
+
+        // --- Bulk Delete Logic Headers ---
+        function updateBulkDeleteButton() {
+            if (!bulkDeleteBtn || !selectedCountSpan) return;
+            if (selectedEventIds.size > 0) {
+                bulkDeleteBtn.style.display = 'block';
+                selectedCountSpan.textContent = selectedEventIds.size;
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                const allEvents = getAllEventsArray(); // This now ensures IDs
+
+                // Filter strictly follows current view logic
+                let filtered = allEvents;
+                if (currentSearchTerm) {
+                    const term = currentSearchTerm.toLowerCase();
+                    filtered = filtered.filter(ev =>
+                        ev.title.toLowerCase().includes(term) ||
+                        ev.email?.toLowerCase().includes(term) ||
+                        ev.time.includes(term)
+                    );
+                }
+                if (currentDateSearch) {
+                    const [y, m, d] = currentDateSearch.split('-');
+                    const searchKey = `${parseInt(y)}-${parseInt(m)}-${parseInt(d)}`;
+                    filtered = filtered.filter(ev => ev.dateKey === searchKey);
+                }
+
+                // Target only current page items
+                const start = (currentModalPage - 1) * itemsPerPage;
+                const pagedEvents = filtered.slice(start, start + itemsPerPage);
+
+                pagedEvents.forEach(ev => {
+                    if (e.target.checked) selectedEventIds.add(ev.id);
+                    else selectedEventIds.delete(ev.id);
+                });
+
+                renderAllEventsTable();
+            });
+        }
+
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', () => {
+                if (confirm(`Bạn có chắc muốn xóa ${selectedEventIds.size} sự kiện đã chọn?`)) {
+                    Object.keys(events).forEach(key => {
+                        const originalList = events[key];
+                        // Keep events that match NO selected ID
+                        const newList = originalList.filter(ev => !selectedEventIds.has(ev.id));
+
+                        if (newList.length !== originalList.length) {
+                            events[key] = newList;
+                        }
+
+                        if (events[key].length === 0) delete events[key];
+                    });
+
+                    selectedEventIds.clear();
+                    saveEvents(); // This re-renders everything
+                }
+            });
+        }
+
+        viewAllBtn.onclick = () => {
+            // Reset state on open
+            currentModalPage = 1;
+            currentSearchTerm = "";
+            currentDateSearch = "";
+            eventSearchInput.value = "";
+            eventDateSearchInput.value = "";
+            selectedEventIds.clear();
+            renderAllEventsTable();
+            allEventsModal.classList.add('active');
+        }
+
+        // --- Reminders & Email Mock ---
+        function setupReminders() {
+            setInterval(() => {
+                const now = new Date();
+                const key = getDateKey(now);
+                const todaysEvents = events[key];
+
+                if (todaysEvents) {
+                    todaysEvents.forEach(ev => {
+                        const [hours, minutes] = ev.time.split(':');
+                        const eventTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+                        // Using a 60s window to avoid double firing (handled by storing 'notified' flag in real apps, but simple here)
+                        // Trigger exactly at reminder time
+                        const reminderTime = new Date(eventTime.getTime() - ev.reminder * 60000);
+
+                        if (now.getHours() === reminderTime.getHours() &&
+                            now.getMinutes() === reminderTime.getMinutes()) {
+
+                            // Check if we haven't notified already in this minute?
+                            // For simplicity, we just notify. Chrome debounces rapid notifications.
+
+                            showNotification(ev.title, `Sắp diễn ra lúc ${ev.time}`);
+
+                            // Mock Email Sending
+                            if (ev.email) {
+                                console.log(`[MOCK EMAIL SERVER] Sending email to ${ev.email}: Event "${ev.title}" at ${ev.time}`);
+                                showNotification("📧 Gửi Email", `Đang gửi mail nhắc nhở đến ${ev.email}...`);
+                            }
+                        }
+                    });
+                }
+            }, 60000); // Check every minute
+        }
+
+        function showNotification(title, body) {
+            if (Notification.permission === "granted") {
+                new Notification(title, { body, icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png' });
+            }
+        }
+
+        prevBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        nextBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        addEventBtn.addEventListener('click', addEvent);
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mina no Nihongo - Học tiếng Nhật dễ dàng</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="data.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-inner">
+            <a href="#" class="logo">
+                <span>🇯🇵</span> NihonGO!
+            </a>
+
+            <nav class="nav-links">
+                <a href="#" class="nav-item active">Trang chủ</a>
+                <a href="#learn" class="nav-item">Học</a>
+                <a href="review.html" class="nav-item">Quiz</a>
+            </nav>
+
+            <div class="user-streak">
+                <span>🔥</span> <span id="streakCount">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="watermark bg-kanji-1">桜</div>
+        <div class="watermark bg-kanji-2">学</div>
+
+        <div class="container">
+            <div class="badge">✨ Dành cho người mới bắt đầu</div>
+
+            <h1>
+                Học tiếng Nhật <br>
+                <span class="highlight">một cách dễ dàng</span>
+            </h1>
+
+            <div class="hero-subtitle">日本語を楽しく学ぼう！</div>
+
+            <p class="hero-desc">
+                Bắt đầu hành trình học tiếng Nhật với phương pháp đơn giản, hiệu quả.<br>
+                Học Hiragana, Katakana và từ vựng cơ bản của 50 bài Mina.
+            </p>
+
+            <div class="cta-group">
+                <a href="#learn" class="btn btn-primary">▶ Bắt đầu học ngay</a>
+                <a href="review.html" class="btn btn-outline">Tìm hiểu thêm</a>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <h3>92</h3>
+                    <p>Ký tự bảng chữ</p>
+                </div>
+                <div class="stat-item">
+                    <h3>50+</h3>
+                    <p>Bài từ vựng</p>
+                </div>
+                <div class="stat-item">
+                    <h3>∞</h3>
+                    <p>Bài review</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lesson Grid Section -->
+    <section class="lesson-section" id="learn">
+        <div class="container">
+            <h2 class="section-title">Danh sách bài học</h2>
+            <div class="lesson-grid" id="lessonGrid">
+                <!-- JS will render this -->
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- Init ---
+        const completedLessons = JSON.parse(localStorage.getItem('mina_completed') || '[]');
+
+        // Update Streak (Count of completed lessons)
+        const streakEl = document.getElementById('streakCount');
+        if (streakEl) streakEl.textContent = completedLessons.length;
+
+        // Render Grid
+        const grid = document.getElementById('lessonGrid');
+        minaData.forEach(lesson => {
+            const card = document.createElement('a');
+            card.href = `lesson.html?id=${lesson.id}`;
+            card.className = 'lesson-card';
+            if (completedLessons.includes(lesson.id)) {
+                card.classList.add('completed');
+            }
+
+            card.innerHTML = `
+                <div class="lesson-number">${lesson.id}</div>
+                <div class="lesson-label">Bài ${lesson.id}</div>
+            `;
+            grid.appendChild(card);
+        });
+    </script>
+</body>
+
+</html>

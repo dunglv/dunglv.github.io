@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn Tập - Mina App</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="data.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <span>🇯🇵</span> NihonGO!
+            </a>
+
+            <div style="font-weight: 700; color: var(--primary-color); font-size: 1.1rem;">Ôn Tập Tổng Hợp</div>
+
+            <a href="index.html" class="btn btn-outline" style="padding: 5px 15px; font-size: 0.9rem;">Thoát</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero-section">
+            <h2 id="reviewStats">...</h2>
+            <p id="reviewStatus" style="color:#7f8c8d;">Đang chọn câu hỏi ngẫu nhiên...</p>
+        </div>
+
+        <div class="quiz-container" style="max-width: 600px; margin: 0 auto;">
+            <div id="quizTypeBadge" style="
+                background: var(--secondary); 
+                color: var(--primary); 
+                display: inline-block; 
+                padding: 5px 15px; 
+                border-radius: 15px; 
+                font-weight: bold;
+                font-size: 0.8rem;
+                margin-bottom: 20px;
+            ">QUIZ MODE</div>
+
+            <!-- Audio Button (Hidden unless listening mode) -->
+            <button id="audioBtn" class="control-btn" onclick="playQuestionAudio()"
+                style="margin: 0 auto 20px auto; display:none;">🔊</button>
+
+            <div class="quiz-question" id="quizQuestion">...</div>
+
+            <div class="options-grid" id="quizOptions"></div>
+
+            <div id="quizResult" style="margin-top:20px; font-weight:bold; height: 30px;"></div>
+
+            <button class="review-btn" onclick="nextQuestion()" style="margin-top:20px; width:100%; display:none;"
+                id="nextBtn">Câu tiếp theo</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Data Aggregation ---
+        // Get completed lessons from LocalStorage
+        const completedIds = JSON.parse(localStorage.getItem('mina_completed') || '[]');
+
+        let pool = [];
+
+        // If no finished lessons, use Lesson 1 + 2 as demo (or all)
+        // For better UX, let's just use ALL defined vocab in data.js for now if list is empty, or alert.
+        minaData.forEach(lesson => {
+            // Check if user completed or if it's Lesson 1 (Always available)
+            // Or just aggregate everything that has vocab
+            if (lesson.vocab && lesson.vocab.length > 0) {
+                if (completedIds.length === 0 || completedIds.includes(lesson.id) || lesson.id === 1) {
+                    pool = pool.concat(lesson.vocab);
+                }
+            }
+        });
+
+        if (pool.length < 4) {
+            alert('Bạn chưa học đủ từ vựng để ôn tập! Hãy học Bài 1 trước.');
+            window.location.href = 'lesson.html?id=1';
+        }
+
+        document.getElementById('reviewStats').textContent = `Kho từ vựng: ${pool.length} từ`;
+
+        // --- Quiz Logic ---
+        let currentQuestion = null;
+        let score = 0;
+        let total = 0;
+
+        function nextQuestion() {
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('quizResult').textContent = '';
+
+            // Random Word
+            const correctIdx = Math.floor(Math.random() * pool.length);
+            const correctWord = pool[correctIdx];
+            currentQuestion = correctWord;
+
+            // Random Distractors
+            let options = [correctWord];
+            while (options.length < 4) {
+                const rand = pool[Math.floor(Math.random() * pool.length)];
+                if (!options.includes(rand)) options.push(rand);
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            // Random Mode: 0: JP->VN, 1: VN->JP, 2: Listening
+            const mode = Math.floor(Math.random() * 3);
+            setupUI(mode, correctWord, options);
+        }
+
+        function setupUI(mode, correctWord, options) {
+            const questionEl = document.getElementById('quizQuestion');
+            const typeBadge = document.getElementById('quizTypeBadge');
+            const audioBtn = document.getElementById('audioBtn');
+
+            audioBtn.style.display = 'none';
+            questionEl.style.display = 'block';
+
+            if (mode === 0) {
+                // JP -> VN
+                typeBadge.textContent = '🇯🇵 Tiếng Nhật ➡ 🇻🇳 Tiếng Việt';
+                questionEl.textContent = correctWord.kanji + (correctWord.kana ? ` (${correctWord.kana})` : '');
+                renderOptions(options, correctWord, 'meaning');
+            } else if (mode === 1) {
+                // VN -> JP
+                typeBadge.textContent = '🇻🇳 Tiếng Việt ➡ 🇯🇵 Tiếng Nhật';
+                questionEl.textContent = correctWord.meaning;
+                renderOptions(options, correctWord, 'kanji_kana');
+            } else {
+                // Listen -> VN
+                typeBadge.textContent = '🎧 Nghe ➡ 🇻🇳 Tiếng Việt';
+                questionEl.style.display = 'none'; // Hide text
+                audioBtn.style.display = 'block';
+
+                // Auto play
+                setTimeout(playQuestionAudio, 500);
+
+                renderOptions(options, correctWord, 'meaning');
+            }
+        }
+
+        function renderOptions(options, correctWord, displayMode) {
+            const container = document.getElementById('quizOptions');
+            container.innerHTML = '';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+
+                if (displayMode === 'meaning') {
+                    btn.textContent = opt.meaning;
+                } else {
+                    btn.textContent = `${opt.kanji} (${opt.kana})`;
+                }
+
+                btn.onclick = () => checkAnswer(opt, correctWord, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function playQuestionAudio() {
+            if (!currentQuestion) return;
+            const text = currentQuestion.kana || currentQuestion.kanji;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function checkAnswer(selected, correct, btn) {
+            const btns = document.querySelectorAll('.option-btn');
+            btns.forEach(b => b.onclick = null);
+
+            total++;
+
+            if (selected === correct) {
+                score++;
+                btn.classList.add('correct');
+                document.getElementById('quizResult').textContent = '🎉 Chính xác!';
+                document.getElementById('quizResult').style.color = 'var(--success)';
+                playResultSound(true);
+            } else {
+                btn.classList.add('wrong');
+                // Highlight correct
+                btns.forEach(b => {
+                    // Simple check based on content match since objects might differ if logic changed
+                    // But here we used references from pool, so strict equality works? 
+                    // Wait, render options creates closures.
+                    // Better to just check ID if we had one, or reference
+                    // Let's iterate options again or visually match text?
+                    // Safe way:
+                    if (b.textContent.includes(correct.meaning) || b.textContent.includes(correct.kanji)) {
+                        b.classList.add('correct');
+                    }
+                });
+
+                document.getElementById('quizResult').textContent = `Sai rồi. Đáp án: ${correct.kanji} - ${correct.meaning}`;
+                document.getElementById('quizResult').style.color = 'var(--accent)';
+                playResultSound(false);
+            }
+
+            document.getElementById('reviewStatus').textContent = `Điểm số: ${score}/${total}`;
+            document.getElementById('nextBtn').style.display = 'inline-block';
+        }
+
+        function playResultSound(isCorrect) {
+            // Optional: Add AudioContext beeps later
+        }
+
+        // Start
+        nextQuestion();
+
+    </script>
+</body>
+
+</html>

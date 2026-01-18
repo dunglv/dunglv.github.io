@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Học - Mina App</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="data.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <span>🇯🇵</span> NihonGO!
+            </a>
+
+            <div style="font-weight: 700; color: var(--primary-color); font-size: 1.1rem;" id="lessonTitle">Bài ...
+            </div>
+
+            <a href="index.html" class="btn btn-outline" style="padding: 5px 15px; font-size: 0.9rem;">Thoát</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <div class="lesson-nav">
+            <button class="tab-btn active" onclick="switchTab('vocab')">Từ Vựng</button>
+            <button class="tab-btn" onclick="switchTab('grammar')">Ngữ Pháp</button>
+            <button class="tab-btn" onclick="switchTab('quiz')">Luyện Tập</button>
+        </div>
+
+        <!-- Tab 1: Vocab -->
+        <div id="vocab" class="tab-content active">
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="flashcard" id="flashcard">
+                    <div class="card-face card-front">
+                        <div class="vocab-kanji" id="cardKanji">...</div>
+                        <div class="vocab-kana" id="cardKana">...</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="vocab-meaning" id="cardMeaning">...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" onclick="prevCard()">←</button>
+                <button class="control-btn" onclick="playAudio()">🔊</button>
+                <button class="control-btn" onclick="nextCard()">→</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 15px; color: #7f8c8d;" id="cardCounter">1 / 10</div>
+        </div>
+
+        <!-- Tab 2: Grammar -->
+        <div id="grammar" class="tab-content">
+            <div id="grammarList"></div>
+        </div>
+
+        <!-- Tab 3: Quiz -->
+        <div id="quiz" class="tab-content">
+            <div class="quiz-container">
+                <div class="quiz-question" id="quizQuestion">...</div>
+                <div class="options-grid" id="quizOptions"></div>
+                <div id="quizResult" style="margin-top:20px; font-weight:bold;"></div>
+                <button class="review-btn" onclick="initQuiz()" style="margin-top:20px; display:none;"
+                    id="nextQuizBtn">Câu tiếp theo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Init Lesson ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const lessonId = parseInt(urlParams.get('id') || '1');
+        const lesson = minaData.find(l => l.id === lessonId);
+
+        if (!lesson) {
+            alert('Không tìm thấy bài học!');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('lessonTitle').textContent = lesson.title;
+
+        // --- Tab Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // --- Vocab Logic ---
+        let currentCardIdx = 0;
+        const vocabList = lesson.vocab;
+
+        function updateCard() {
+            if (vocabList.length === 0) return;
+            const word = vocabList[currentCardIdx];
+            document.getElementById('cardKanji').textContent = word.kanji;
+            document.getElementById('cardKana').textContent = word.kana;
+            document.getElementById('cardMeaning').textContent = word.meaning;
+            document.getElementById('cardCounter').textContent = `${currentCardIdx + 1} / ${vocabList.length}`;
+
+            // Auto play audio when navigating (optional, maybe better manual)
+            // playAudio(); 
+
+            // Reset Flip
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (currentCardIdx < vocabList.length - 1) {
+                currentCardIdx++;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIdx > 0) {
+                currentCardIdx--;
+                updateCard();
+            }
+        }
+
+        function playAudio() {
+            if (vocabList.length === 0) return;
+            const word = vocabList[currentCardIdx];
+            // Prefer Kana for pronunciation
+            const text = word.kana || word.kanji;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.8; // Slightly slower
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- Grammar Logic ---
+        const grammarList = document.getElementById('grammarList');
+        if (lesson.grammar.length === 0) {
+            grammarList.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu ngữ pháp.</p>';
+        } else {
+            lesson.grammar.forEach(g => {
+                const div = document.createElement('div');
+                div.className = 'grammar-point';
+                div.innerHTML = `
+                    <div class="grammar-title">${g.title}</div>
+                    <div>${g.content}</div>
+                `;
+                grammarList.appendChild(div);
+            });
+        }
+
+        // --- Quiz Logic ---
+        function initQuiz() {
+            if (vocabList.length < 4) {
+                document.getElementById('quiz').innerHTML = '<p style="text-align:center;">Cần ít nhất 4 từ vựng để tạo Quiz.</p>';
+                return;
+            }
+
+            document.getElementById('quizResult').textContent = '';
+            document.getElementById('nextQuizBtn').style.display = 'none';
+
+            // Random question
+            const correctIdx = Math.floor(Math.random() * vocabList.length);
+            const correctWord = vocabList[correctIdx];
+
+            // Random options
+            let options = [correctWord];
+            while (options.length < 4) {
+                const rand = vocabList[Math.floor(Math.random() * vocabList.length)];
+                if (!options.includes(rand)) options.push(rand);
+            }
+            // Shuffle
+            options.sort(() => Math.random() - 0.5);
+
+            // Display
+            const mode = Math.random() > 0.5 ? 'JP_VN' : 'VN_JP'; // Random mode
+
+            if (mode === 'JP_VN') {
+                document.getElementById('quizQuestion').textContent = correctWord.kanji + ' (' + correctWord.kana + ')';
+                renderOptions(options, correctWord, 'meaning');
+            } else {
+                document.getElementById('quizQuestion').textContent = correctWord.meaning;
+                renderOptions(options, correctWord, 'kanji'); // Or kana
+            }
+        }
+
+        function renderOptions(options, correctWord, answerKey) {
+            const container = document.getElementById('quizOptions');
+            container.innerHTML = '';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                // Improve display
+                let text = opt[answerKey];
+                if (answerKey === 'kanji') text += ` (${opt.kana})`;
+
+                btn.textContent = text;
+
+                btn.onclick = () => checkAnswer(opt, correctWord, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct, btnElement) {
+            const btns = document.querySelectorAll('.option-btn');
+            btns.forEach(b => b.onclick = null); // Disable clicks
+
+            if (selected === correct) {
+                btnElement.classList.add('correct');
+                document.getElementById('quizResult').textContent = '✅ Chính xác!';
+                document.getElementById('quizResult').style.color = 'var(--success)';
+
+                // Mark Completion Progress slightly?
+                markLessonComplete();
+            } else {
+                btnElement.classList.add('wrong');
+                // Highlight correct
+                btns.forEach(b => {
+                    if (b.textContent.includes(correct.meaning) || b.textContent.includes(correct.kana)) {
+                        b.classList.add('correct');
+                    }
+                });
+                document.getElementById('quizResult').textContent = '❌ Sai rồi!';
+                document.getElementById('quizResult').style.color = 'var(--accent)';
+            }
+
+            document.getElementById('nextQuizBtn').style.display = 'inline-block';
+        }
+
+        function markLessonComplete() {
+            const completed = JSON.parse(localStorage.getItem('mina_completed') || '[]');
+            if (!completed.includes(lessonId)) {
+                completed.push(lessonId);
+                localStorage.setItem('mina_completed', JSON.stringify(completed));
+            }
+        }
+
+        // Initial Calls
+        updateCard();
+        initQuiz();
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextCard();
+            if (e.key === 'ArrowLeft') prevCard();
+            if (e.key === ' ' || e.key === 'Enter') flipCard();
+        });
+
+    </script>
+</body>
+
+</html>
