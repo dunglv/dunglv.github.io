@@ -276,17 +276,17 @@
             );
         }
 
-        async function decryptBuffer(buffer, password) {
+        function parseChunk(buffer) {
             const bytes = new Uint8Array(buffer);
-            const salt = bytes.slice(0, SALT_LEN);
-            const iv = bytes.slice(SALT_LEN, SALT_LEN + IV_LEN);
-            const data = bytes.slice(SALT_LEN + IV_LEN);
-            const key = await deriveKey(password, salt);
-            return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+            return {
+                salt: bytes.slice(0, SALT_LEN),
+                iv: bytes.slice(SALT_LEN, SALT_LEN + IV_LEN),
+                data: bytes.slice(SALT_LEN + IV_LEN),
+            };
         }
 
-        function triggerDownload(buffer, filename, mimeType) {
-            const blob = new Blob([buffer], { type: mimeType || 'application/octet-stream' });
+        function triggerDownload(parts, filename, mimeType) {
+            const blob = new Blob(parts, { type: mimeType || 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -305,17 +305,37 @@
                 return;
             }
 
+            const chunkFiles = entry.chunks || (entry.encFile ? [entry.encFile] : []);
+            if (!chunkFiles.length) {
+                setStatus('File này không có dữ liệu.', 'error');
+                return;
+            }
+
             const originalLabel = button.textContent;
             button.disabled = true;
-            button.textContent = 'Đang giải mã...';
             setStatus('', '');
 
             try {
-                const res = await fetch(`files/${entry.encFile}`);
-                if (!res.ok) throw new Error('Không tải được file mã hoá.');
-                const encryptedBuffer = await res.arrayBuffer();
-                const decrypted = await decryptBuffer(encryptedBuffer, password);
-                triggerDownload(decrypted, entry.originalName, entry.mimeType);
+                let key = null;
+                const decryptedParts = [];
+
+                for (let i = 0; i < chunkFiles.length; i++) {
+                    button.textContent = chunkFiles.length > 1
+                        ? `Đang giải mã ${i + 1}/${chunkFiles.length}...`
+                        : 'Đang giải mã...';
+
+                    const res = await fetch(`files/${chunkFiles[i]}`);
+                    if (!res.ok) throw new Error('Không tải được file mã hoá.');
+                    const { salt, iv, data } = parseChunk(await res.arrayBuffer());
+
+                    if (!key) {
+                        key = await deriveKey(password, salt);
+                    }
+
+                    decryptedParts.push(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data));
+                }
+
+                triggerDownload(decryptedParts, entry.originalName, entry.mimeType);
                 setStatus(`Đã tải "${entry.displayName}" thành công.`, 'success');
             } catch (err) {
                 setStatus('Sai mật khẩu hoặc file bị lỗi.', 'error');

@@ -1,20 +1,22 @@
 [
   {
-    "id": "237f77f49efb6faa",
-    "displayName": "Tool ETL Validation",
-    "originalName": "etl-validation-tool.zip",
-    "size": 100118628,
-    "mimeType": "application/zip",
-    "encFile": "237f77f49efb6faa.enc",
-    "addedAt": "2026-09-15T09:56:26.332Z"
-  },
-  {
-    "id": "304eb88cc573a936",
-    "displayName": "etl-validation-tool",
+    "id": "3fe5b45303a2261d",
+    "displayName": "ETL validation tool",
     "originalName": "etl-validation-tool.zip",
     "size": 200910681,
     "mimeType": "application/zip",
-    "encFile": "304eb88cc573a936.enc",
-    "addedAt": "2026-09-16T01:40:58.715Z"
+    "chunks": [
+      "3fe5b45303a2261d-0.enc",
+      "3fe5b45303a2261d-1.enc",
+      "3fe5b45303a2261d-2.enc",
+      "3fe5b45303a2261d-3.enc",
+      "3fe5b45303a2261d-4.enc",
+      "3fe5b45303a2261d-5.enc",
+      "3fe5b45303a2261d-6.enc",
+      "3fe5b45303a2261d-7.enc",
+      "3fe5b45303a2261d-8.enc",
+      "3fe5b45303a2261d-9.enc"
+    ],
+    "addedAt": "2026-09-17T11:37:30.167Z"
   }
 ]
